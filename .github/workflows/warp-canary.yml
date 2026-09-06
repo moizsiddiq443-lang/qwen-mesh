@@ -75,6 +75,9 @@ jobs:
         run: |
           cat > /tmp/fire-canary.mjs <<'FIRE_EOF'
           import { setTimeout as sleep } from 'node:timers/promises'
+          import dns from 'node:dns'
+          dns.setDefaultResultOrder('ipv4first')
+          const causeOf = (e) => String(e?.cause?.code ?? e?.cause?.message ?? e?.message ?? e)
           const BASE = 'https://chat.qwen.ai'
           const API_VERSION = '0.2.83'
           const MODEL = 'qwen3.8-max'
@@ -94,6 +97,13 @@ jobs:
           const jwtPayload = (t) => { try { return JSON.parse(Buffer.from(t.split('.')[1], 'base64').toString('utf8')) } catch { return {} } }
           const jp = jwtPayload(token)
           console.log('[preflight] account ' + idx + ': JWT exp=' + (jp.exp ? new Date(jp.exp * 1000).toISOString() : '?') + ', jar cookies=' + cookieCount)
+          try {
+            const d = await fetch('https://www.cloudflare.com/cdn-cgi/trace', { signal: AbortSignal.timeout(20000) })
+            const dt = await d.text()
+            console.log('[preflight] node-fetch diag cloudflare.com: HTTP ' + d.status + ', warp=' + (dt.match(/warp=(\w+)/)?.[1] ?? '?'))
+          } catch (e) {
+            console.log('[preflight] node-fetch diag cloudflare.com FAILED: ' + causeOf(e))
+          }
 
           function headers({ withBody = false, withCookie = false } = {}) {
             const h = {
@@ -130,8 +140,8 @@ jobs:
               console.log('[STEP A] body[:200]: ' + text.slice(0, 200))
               return { status: r.status, id, punish: isPunish(text) }
             } catch (e) {
-              console.log('[STEP A] chats/new FETCH ERROR: ' + e.message)
-              return { status: 0, id: null, punish: false, err: e.message }
+              console.log('[STEP A] chats/new FETCH ERROR: ' + causeOf(e))
+              return { status: 0, id: null, punish: false, err: causeOf(e) }
             }
           }
 
@@ -175,7 +185,7 @@ jobs:
               return { status, head, punish: isPunish(head), aborted: false, elapsed: Date.now() - t0 }
             } catch (e) {
               const aborted = e.name === 'AbortError'
-              console.log('[STEP B] completions: ' + (aborted ? 'ABORTED after 60000ms' : 'FETCH ERROR: ' + e.message) + ' (' + (Date.now() - t0) + 'ms)')
+              console.log('[STEP B] completions: ' + (aborted ? 'ABORTED after 60000ms' : 'FETCH ERROR: ' + causeOf(e)) + ' (' + (Date.now() - t0) + 'ms)')
               return { status: 0, head: '', punish: false, aborted, elapsed: Date.now() - t0 }
             } finally { clearTimeout(timer) }
           }
@@ -200,11 +210,16 @@ jobs:
                 userLanded: roles.includes('user'), phases: [...new Set(phases)].join(',') || '(none)',
                 punish: isPunish(text),
               }
-            } catch (e) { return { status: 0, err: e.message } }
+            } catch (e) { return { status: 0, err: causeOf(e) } }
           }
 
           const t0 = Date.now()
-          const a = await stepA()
+          let a = await stepA()
+          if (!a.id && a.status === 0 && !a.punish) {
+            console.log('[STEP A] network-level failure (' + (a.err ?? 'unknown') + ') — ONE reconnect attempt in 5s (infra retry, not a fire)')
+            await sleep(5000)
+            a = await stepA()
+          }
           if (!a.id) {
             console.log('FIRE_RESULT ' + JSON.stringify({
               chats_new_status: a.status, chats_new_punished: a.punish, chats_new_error: a.err ?? null,
