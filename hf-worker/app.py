@@ -596,7 +596,7 @@ def run_project(pconf: dict, t0: float) -> dict:
     import shutil as _sh
     log = ["project: ENTER run_project"]
     print("[project] ENTER run_project", flush=True)
-    repo = str(pconf.get("repo", "f2025408135-cyber/qwen-research"))
+    repo = str(pconf.get("repo", "moizsiddiq443-lang/qwen-research"))
     token = str(pconf.get("token", ""))
     name = str(pconf.get("name", "")).strip("/")
     task = str(pconf.get("task", "")).strip()
@@ -707,5 +707,59 @@ with gr.Blocks(title="qwen-mesh-agent worker") as demo:
     output = gr.Textbox(label="result", lines=12)
     run_btn.click(run_task, inputs=task_input, outputs=output, concurrency_limit=8)
 
-# Zero a10g = 2 vCPU / 16GB RAM: ~4-5 parallel light hermes runs is realistic.
-demo.queue(default_concurrency_limit=8).launch()
+
+# --- FreeCode 12-zen-key router sidecar (loopback node process + /v1 proxy) ---
+# The space is private: HF's edge requires Bearer hf_... for every request, so
+# agents authenticate with their hf token only. The proxy injects the router's
+# own token for read/chat paths; admin mutations stay master-token-gated.
+import uvicorn
+from fastapi import FastAPI
+
+import freecode_router
+from freecode_router import router as freecode_proxy_router
+
+_fastapi_app = FastAPI(title="qwen-mesh-agent", docs_url=None, redoc_url=None)
+_fastapi_app.include_router(freecode_proxy_router)
+demo.queue(default_concurrency_limit=8)
+# ssr_mode=False: gradio 6's SSR node proxy would grab the user-facing port
+# (7860) and collide with our own uvicorn. Client-side rendering is fine here.
+_fastapi_app = gr.mount_gradio_app(_fastapi_app, demo, path="/", ssr_mode=False)
+
+# ZeroGPU startup report normally fires inside the patched demo.launch(); with
+# mount_gradio_app we must trigger it ourselves so @spaces.GPU calls (gpu probe)
+# remain schedulable. Bounded: CPU work is unaffected if this fails.
+def _zerogpu_startup_report() -> None:
+    try:
+        import torch
+        from spaces.zero import client as zclient
+        from spaces.zero import config as zconfig
+        from spaces.zero import decorator as zdecorator
+        from spaces.zero import torch as ztorch
+        if len(zdecorator.decorated_cache) == 0:
+            return
+        zconfig.get_config()
+        ztorch.pack()
+        zclient.startup_report()
+        print("[zerogpu] startup report sent", flush=True)
+    except Exception as e:
+        print("[zerogpu] startup report skipped: " + str(e)[-200:], flush=True)
+
+
+def _prewarm_router() -> None:
+    """Spawn the node router at app start (background thread) so the first
+    agent request does not pay the cold-start."""
+    def _run():
+        ok = freecode_router.ensure_freecode_router()
+        print("[freecode] sidecar prewarm: " + ("ready" if ok else "FAILED"), flush=True)
+    threading.Thread(target=_run, daemon=True).start()
+
+
+_zerogpu_startup_report()
+_prewarm_router()
+
+if __name__ == "__main__":
+    # Bind like demo.launch() does: the ZeroGPU image assigns the user-facing
+    # port via env; 7860 is only a fallback for plain local runs.
+    uvicorn.run(_fastapi_app,
+                host=os.environ.get("GRADIO_SERVER_NAME", "0.0.0.0"),
+                port=int(os.environ.get("GRADIO_SERVER_PORT", os.environ.get("PORT", "7860"))))

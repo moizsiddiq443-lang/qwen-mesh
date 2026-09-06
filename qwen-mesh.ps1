@@ -11,11 +11,12 @@ param(
   [string[]]$Wave,
   [int]$Account = 0,
   [int]$MaxWait = 1500,
+  [int]$FireGapSeconds = 600,
   [switch]$Wait,
   [switch]$DryRun,
   [string]$OutDir = "F:\FREE CODE BY MOIZ\.opencode\skills\qwen\outputs",
   [string]$MeshDir = "F:\FREE CODE BY MOIZ\services\remote-mesh",
-  [string]$Repo = "f2025408135-cyber/qwen-mesh",
+  [string]$Repo = "moizsiddiq443-lang/qwen-mesh",
   [string]$EnvFile = "F:\FREE CODE BY MOIZ\.env.freecode"
 )
 
@@ -26,7 +27,7 @@ function Log($msg) { Write-Output "[qwen-mesh] $msg" }
 # Pull the newest report for an account from the PRIVATE repo (reports never public).
 # Returns a hashtable { md, pdf, result } file paths, or $null if not found.
 function Get-PrivateReport([int]$acct) {
-  $priv = "f2025408135-cyber/qwen-research"
+  $priv = "moizsiddiq443-lang/qwen-research"
   if (-not $env:GH_TOKEN) { try { $env:GH_TOKEN = (gh auth token 2>$null).Trim() } catch { } }
   $tmp = Join-Path $env:TEMP "qwen-mesh-pull-$acct"
   Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
@@ -111,7 +112,16 @@ function Run-Single($topicText, $acct) {
   if (-not $fireJson) { Fail "fire-local produced no output" }
   $fire = $fireJson | ConvertFrom-Json
   if (-not $fire.ok) { Fail "fire failed: $($fire.error)" }
-  Log "fired: chat=$($fire.chat_id) completions=$($fire.completions_status) seen=$($fire.notice_seen)"
+  Log "fired: chat=$($fire.chat_id) completions=$($fire.completions_status) landed=$($fire.landed) seen=$($fire.notice_seen)"
+
+  # LANDED GATE (2026-09-05): a WAF-punished/dropped account leaves an EMPTY
+  # chat — dispatching a collect would burn 25-40 min of runner time for
+  # nothing. Only dispatch when the research actually registered server-side.
+  if (-not $fire.landed) {
+    Log "RESEARCH NOT LANDED (WAF punish/drop on account $acct) — no collect dispatched."
+    Log "Fix: wait $FireGapSeconds+s (punish window), re-run on another account, or mature this account via normal bridge chats."
+    return @{ ok = $false; landed = $false; account = $acct; chat_id = $fire.chat_id }
+  }
 
   # dispatch collect
   Log "dispatching collect..."
@@ -125,7 +135,7 @@ function Run-Single($topicText, $acct) {
 
   if (-not $Wait) {
     Log "run 'gh run watch $runId -R $Repo --exit-status' to monitor"
-    return @{ ok = $true; run_id = $runId; chat_id = $fire.chat_id }
+    return @{ ok = $true; landed = $true; run_id = $runId; chat_id = $fire.chat_id }
   }
 
   # watch
@@ -168,7 +178,7 @@ function Run-Wave($topics, $startAcct) {
   foreach ($t in $topics) {
     $fired++
     $acct = if ($startAcct -gt 0) { $startAcct } else { $fired }
-    if ($acct -gt 5) { $acct = (($fired - 1) % 5) + 1 }
+    if ($acct -gt 25) { $acct = (($fired - 1) % 25) + 1 }
     Log "--- WAVE FIRE $fired/$($topics.Count) (account $acct) ---"
     $env:FIRE_TOPIC = $t
     $env:FIRE_ACCOUNT_INDEX = "$acct"
@@ -177,11 +187,19 @@ function Run-Wave($topics, $startAcct) {
     $fireJson = node "$MeshDir\local\fire-local.mjs" 2>$null | Where-Object { $_ -match '^\{' } | Select-Object -Last 1
     if ($fireJson) {
       $f = $fireJson | ConvertFrom-Json
-      if ($f.ok) {
-        Log "fired: chat=$($f.chat_id) acct=$acct seen=$($f.notice_seen)"
+      if ($f.ok -and $f.landed) {
+        Log "fired+LANDED: chat=$($f.chat_id) acct=$acct seen=$($f.notice_seen)"
         $chatIds += @{ chat = $f.chat_id; acct = $acct; topic = $t }
+      } elseif ($f.ok) {
+        Log "FIRE DROPPED (WAF punish on acct $acct, landed=$($f.landed)) — skipping; next fire after gap"
       } else { Log "FIRE FAILED: $($f.error)" }
     } else { Log "FIRE FAILED: no output" }
+    # PACE (2026-09-05): back-to-back fires from one IP trigger the WAF punish
+    # window (FAIL_SYS_USER_VALIDATE/RGV587). Space fires out.
+    if ($fired -lt $topics.Count -and $FireGapSeconds -gt 0) {
+      Log "pacing: sleeping $FireGapSeconds s before next fire (WAF burst protection)"
+      Start-Sleep -Seconds $FireGapSeconds
+    }
   }
 
   if ($chatIds.Count -eq 0) { Fail "no fires succeeded" }

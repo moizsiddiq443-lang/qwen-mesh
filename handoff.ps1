@@ -21,7 +21,7 @@ param(
   [switch]$Wait
 )
 
-$Repo = "f2025408135-cyber/qwen-mesh"
+$Repo = "moizsiddiq443-lang/qwen-mesh"
 
 # profile-set GH_TOKEN can shadow gh's keyring login -> 401s. Use keyring.
 Remove-Item Env:GH_TOKEN -ErrorAction SilentlyContinue

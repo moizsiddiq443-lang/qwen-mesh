@@ -41,7 +41,7 @@ jobs:
             TASK_JSON=$(jq -n --arg t "$TASK" '{codex: {prompt: $t, timeout: 420}}')
           elif [ "$ENGINE" = "project" ] && [ -n "$PROJECT" ]; then
             TASK_JSON=$(jq -n --arg t "$TASK" --arg p "$PROJECT" --arg k "$PRIVATE_REPO_TOKEN" --arg b "$BRANCH" \
-              '{project: {name: $p, repo: "f2025408135-cyber/qwen-research", token: $k, branch: $b, task: $t, timeout: 540}}')
+              '{project: {name: $p, repo: "moizsiddiq443-lang/qwen-research", token: $k, branch: $b, task: $t, timeout: 540}}')
           else
             TASK_JSON=$(jq -n --arg t "$TASK" '{opencode: {prompt: $t, timeout: 480}}')
           fi

@@ -13,7 +13,7 @@ param(
   [Parameter(Mandatory = $true)][string]$Name
 )
 
-$Repo = "f2025408135-cyber/qwen-research"
+$Repo = "moizsiddiq443-lang/qwen-research"
 $Work = "$env:TEMP\qwen-research-sync"
 
 # profile-set GH_TOKEN can shadow gh's keyring login with a limited fine-grained

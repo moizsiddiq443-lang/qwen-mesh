@@ -10,7 +10,7 @@ param(
   [int]$MaxWait = 1800,
   [switch]$Wait,
   [string]$OutDir = "F:\FREE CODE BY MOIZ\.opencode\skills\qwen\outputs",
-  [string]$Repo = "f2025408135-cyber/qwen-mesh"
+  [string]$Repo = "moizsiddiq443-lang/qwen-mesh"
 )
 $ErrorActionPreference = "Stop"
 
@@ -29,7 +29,11 @@ $fire = node "$PSScriptRoot\fire-local.mjs" 2>$null | Where-Object { $_ -like '{
 if (-not $fire) { Write-Error "fire-local produced no JSON (see [fire] stderr above)"; exit 1 }
 $f = $fire | ConvertFrom-Json
 if (-not $f.ok) { Write-Error "fire failed: $($f.error)"; exit 1 }
-Write-Output "fired: chat_id=$($f.chat_id) account=$($f.account_index) notice_seen=$($f.notice_seen)"
+Write-Output "fired: chat_id=$($f.chat_id) account=$($f.account_index) landed=$($f.landed) notice_seen=$($f.notice_seen)"
+if (-not $f.landed) {
+  Write-Error "RESEARCH NOT LANDED — the account is WAF-punished/dropped (FAIL_SYS_USER_VALIDATE / empty chat). No collect dispatched. Wait ~30-60 min or use a different account. Normal bridge chat still works during the punish window."
+  exit 1
+}
 
 # 2) dispatch remote collector
 $topicArg = $Topic -replace '"', "'"
@@ -49,7 +53,7 @@ if ($LASTEXITCODE -ne 0) { Write-Error "collect run failed - check the run log";
 # Pull the report from the PRIVATE repo (reports are never public).
 # The private repo stores reports/reports/qwen-research-<TS>-acct<N>.md.
 # We pull fresh and take the newest file for this account.
-$priv = "f2025408135-cyber/qwen-research"
+$priv = "moizsiddiq443-lang/qwen-research"
 $tmp = Join-Path $env:TEMP "qwen-mesh-private-$runId"
 git clone --quiet --depth 1 "https://x-access-token:$env:GH_TOKEN@github.com/$priv.git" $tmp 2>$null
 $res = $null
