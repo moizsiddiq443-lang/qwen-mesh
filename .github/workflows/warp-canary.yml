@@ -1,0 +1,261 @@
+name: warp-canary
+
+# CANARY: does a Qwen deep-research fire LAND when egress = Cloudflare WARP on a GH runner?
+# Azure egress = known black-holed; HF AWS egress = passes; CF = open question.
+# Dispatch-only. Exactly ONE fire per run. Exit codes: 0 = clean result, 1 = infra failure, 2 = WAF punish.
+
+on:
+  workflow_dispatch:
+    inputs:
+      account_index:
+        description: 'Qwen account index whose QWEN_JWT_<n> secret to fire (default 7)'
+        required: false
+        type: string
+        default: '7'
+
+concurrency:
+  group: warp-canary
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up WARP (wireguard — tunnels ALL runner egress via Cloudflare)
+        uses: fscarmen/warp-on-actions@v1.4
+        with:
+          stack: ipv4
+          mode: wireguard
+
+      - name: Log egress IP (must be Cloudflare-ish, NOT Azure)
+        run: |
+          IP=$(curl -s --max-time 20 https://api.ipify.org)
+          echo "EGRESS_IP=$IP"
+          echo "Egress IP: **$IP**" >> "$GITHUB_STEP_SUMMARY"
+          curl -s --max-time 20 https://www.cloudflare.com/cdn-cgi/trace | grep -E '^(ip|warp|loc|colo)=' || true
+
+      - name: Canary fire (chats/new Bearer-only -> completions Bearer+Cookie -> landing GETs)
+        env:
+          ACCOUNT_INDEX: ${{ github.event.inputs.account_index || '7' }}
+          QWEN_JWT_1: ${{ secrets.QWEN_JWT_1 }}
+          QWEN_JWT_2: ${{ secrets.QWEN_JWT_2 }}
+          QWEN_JWT_3: ${{ secrets.QWEN_JWT_3 }}
+          QWEN_JWT_4: ${{ secrets.QWEN_JWT_4 }}
+          QWEN_JWT_5: ${{ secrets.QWEN_JWT_5 }}
+          QWEN_JWT_6: ${{ secrets.QWEN_JWT_6 }}
+          QWEN_JWT_7: ${{ secrets.QWEN_JWT_7 }}
+          QWEN_JWT_8: ${{ secrets.QWEN_JWT_8 }}
+          QWEN_JWT_9: ${{ secrets.QWEN_JWT_9 }}
+          QWEN_JWT_10: ${{ secrets.QWEN_JWT_10 }}
+          QWEN_JWT_11: ${{ secrets.QWEN_JWT_11 }}
+          QWEN_JWT_12: ${{ secrets.QWEN_JWT_12 }}
+          QWEN_JWT_13: ${{ secrets.QWEN_JWT_13 }}
+          QWEN_JWT_14: ${{ secrets.QWEN_JWT_14 }}
+          QWEN_JWT_15: ${{ secrets.QWEN_JWT_15 }}
+          QWEN_JWT_16: ${{ secrets.QWEN_JWT_16 }}
+          QWEN_JWT_17: ${{ secrets.QWEN_JWT_17 }}
+          QWEN_JWT_18: ${{ secrets.QWEN_JWT_18 }}
+          QWEN_JWT_19: ${{ secrets.QWEN_JWT_19 }}
+          QWEN_JWT_20: ${{ secrets.QWEN_JWT_20 }}
+          QWEN_JWT_21: ${{ secrets.QWEN_JWT_21 }}
+          QWEN_JWT_22: ${{ secrets.QWEN_JWT_22 }}
+          QWEN_JWT_23: ${{ secrets.QWEN_JWT_23 }}
+          QWEN_JWT_24: ${{ secrets.QWEN_JWT_24 }}
+          QWEN_JWT_25: ${{ secrets.QWEN_JWT_25 }}
+          QWEN_COOKIE_JAR: ${{ secrets.QWEN_COOKIE_JAR }}
+        run: |
+          cat > /tmp/fire-canary.mjs <<'FIRE_EOF'
+          import { setTimeout as sleep } from 'node:timers/promises'
+          const BASE = 'https://chat.qwen.ai'
+          const API_VERSION = '0.2.83'
+          const MODEL = 'qwen3.8-max'
+          const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36'
+          const TOPIC = 'Comparison of on-device inference stacks (llama.cpp, Ollama, MLX) for 7B-class models in 2026'
+          const isPunish = (s) => /RGV587|____tmd_____|punish|FAIL_SYS_USER_VALIDATE/i.test(String(s ?? ''))
+
+          const idx = Number(process.env.ACCOUNT_INDEX || '7')
+          const token = process.env['QWEN_JWT_' + idx] || ''
+          const cookieStr = process.env.QWEN_COOKIE_JAR || ''
+          const cookieCount = cookieStr ? cookieStr.split('; ').length : 0
+
+          if (!token) {
+            console.log('FATAL: no JWT for account ' + idx)
+            process.exit(1)
+          }
+          const jwtPayload = (t) => { try { return JSON.parse(Buffer.from(t.split('.')[1], 'base64').toString('utf8')) } catch { return {} } }
+          const jp = jwtPayload(token)
+          console.log('[preflight] account ' + idx + ': JWT exp=' + (jp.exp ? new Date(jp.exp * 1000).toISOString() : '?') + ', jar cookies=' + cookieCount)
+
+          function headers({ withBody = false, withCookie = false } = {}) {
+            const h = {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ' + token,
+              'Version': API_VERSION,
+              'source': 'desktop',
+              'X-Request-Id': crypto.randomUUID(),
+              'User-Agent': UA,
+              'Origin': BASE,
+              'Referer': BASE + '/',
+              'Accept-Language': 'en-US,en;q=0.9',
+              'sec-ch-ua': '"Chromium";v="137", "Google Chrome";v="137", "Not?A:Brand";v="24"',
+              'sec-ch-ua-mobile': '?0',
+              'sec-ch-ua-platform': '"Windows"',
+              'Sec-Fetch-Dest': 'empty',
+              'Sec-Fetch-Mode': 'cors',
+              'Sec-Fetch-Site': 'same-origin',
+            }
+            if (withBody) h['Content-Type'] = 'application/json'
+            if (withCookie && cookieStr) h['Cookie'] = cookieStr
+            return h
+          }
+
+          async function stepA() {
+            const t0 = Date.now()
+            try {
+              const r = await fetch(BASE + '/api/v2/chats/new', {
+                method: 'POST', headers: headers({ withBody: true, withCookie: false }), body: '{}',
+              })
+              const text = await r.text()
+              const id = r.status === 200 ? (JSON.parse(text)?.data?.id ?? null) : null
+              console.log('[STEP A] chats/new: HTTP ' + r.status + ' in ' + (Date.now() - t0) + 'ms' + (isPunish(text) ? ' [WAF PUNISH BODY]' : ''))
+              console.log('[STEP A] body[:200]: ' + text.slice(0, 200))
+              return { status: r.status, id, punish: isPunish(text) }
+            } catch (e) {
+              console.log('[STEP A] chats/new FETCH ERROR: ' + e.message)
+              return { status: 0, id: null, punish: false, err: e.message }
+            }
+          }
+
+          function deepResearchMessage(content) {
+            return {
+              id: null, fid: crypto.randomUUID(), parentId: null, childrenIds: [crypto.randomUUID()],
+              role: 'user', content, user_action: 'chat', files: [],
+              timestamp: Math.floor(Date.now() / 1000), models: [MODEL], model: '',
+              chat_type: 'deep_research',
+              feature_config: { thinking_enabled: true, output_schema: 'phase', research_mode: 'advance', auto_thinking: true, thinking_mode: 'Auto', thinking_format: 'summary', auto_search: true },
+              extra: { meta: { subChatType: 'deep_research' } }, sub_chat_type: 'deep_research',
+            }
+          }
+
+          async function stepB(chatId) {
+            const body = JSON.stringify({
+              stream: true, version: '2.1', incremental_output: true, chatId, parentId: null,
+              chat_id: chatId, chat_mode: 'normal', model: MODEL, parent_id: null,
+              messages: [deepResearchMessage(TOPIC)], timestamp: Math.floor(Date.now() / 1000),
+            })
+            const ctl = new AbortController()
+            const timer = setTimeout(() => ctl.abort(), 60000)
+            const t0 = Date.now()
+            try {
+              const r = await fetch(BASE + '/api/v2/chat/completions?chat_id=' + chatId, {
+                method: 'POST', headers: headers({ withBody: true, withCookie: true }), body, signal: ctl.signal,
+              })
+              const status = r.status
+              let head = ''
+              try {
+                const reader = r.body.getReader()
+                const dec = new TextDecoder()
+                while (head.length < 4096) {
+                  const { done, value } = await reader.read()
+                  if (done) break
+                  head += dec.decode(value, { stream: true })
+                }
+              } catch { /* aborted mid-stream */ }
+              console.log('[STEP B] completions: HTTP ' + status + ', read ' + head.length + 'B in ' + (Date.now() - t0) + 'ms' + (isPunish(head) ? ' [WAF PUNISH BODY]' : ''))
+              console.log('[STEP B] stream head[:240]: ' + JSON.stringify(head.slice(0, 240)))
+              return { status, head, punish: isPunish(head), aborted: false, elapsed: Date.now() - t0 }
+            } catch (e) {
+              const aborted = e.name === 'AbortError'
+              console.log('[STEP B] completions: ' + (aborted ? 'ABORTED after 60000ms' : 'FETCH ERROR: ' + e.message) + ' (' + (Date.now() - t0) + 'ms)')
+              return { status: 0, head: '', punish: false, aborted, elapsed: Date.now() - t0 }
+            } finally { clearTimeout(timer) }
+          }
+
+          async function getChat(chatId) {
+            try {
+              const r = await fetch(BASE + '/api/v2/chats/' + chatId + '?direction=up&limit=10', {
+                headers: headers({ withCookie: true }),
+              })
+              const text = await r.text()
+              if (r.status !== 200) return { status: r.status, punish: isPunish(text), head: text.slice(0, 150) }
+              const j = JSON.parse(text)
+              const msgs = Object.values(j?.data?.chat?.history?.messages ?? {})
+              const roles = msgs.map((m) => m?.role)
+              const phases = []
+              for (const m of msgs) {
+                if (m?.role !== 'assistant') continue
+                for (const c of m?.content_list ?? []) if (c?.phase) phases.push(c.phase)
+              }
+              return {
+                status: r.status, msgCount: msgs.length, roles: roles.join(','),
+                userLanded: roles.includes('user'), phases: [...new Set(phases)].join(',') || '(none)',
+                punish: isPunish(text),
+              }
+            } catch (e) { return { status: 0, err: e.message } }
+          }
+
+          const t0 = Date.now()
+          const a = await stepA()
+          if (!a.id) {
+            console.log('FIRE_RESULT ' + JSON.stringify({
+              chats_new_status: a.status, chats_new_punished: a.punish, chats_new_error: a.err ?? null,
+              completions_status: null, landed: false, stopped: 'no chat id - no completions attempt',
+            }))
+            process.exit(a.punish ? 2 : 1)
+          }
+
+          const b = await stepB(a.id)
+          await sleep(30000)
+          const c1 = await getChat(a.id)
+          console.log('[STEP C] poll 1 (+~30s): ' + JSON.stringify(c1).slice(0, 300))
+          await sleep(30000)
+          const c2 = await getChat(a.id)
+          console.log('[STEP C] poll 2 (+~60s): ' + JSON.stringify(c2).slice(0, 300))
+
+          const landed = [c1, c2].some((c) => c.msgCount > 0)
+          const noticeSeen = [c1, c2].some((c) => /research|answer|WebResearch/i.test(c.phases ?? ''))
+          const last = c2
+          console.log('FIRE_RESULT ' + JSON.stringify({
+            chats_new_status: a.status,
+            chats_new_punished: a.punish,
+            completions_status: b.status,
+            completions_aborted_midstream: !!b.aborted,
+            completions_punished: b.punish,
+            landed,
+            user_landed: last.userLanded ?? false,
+            msg_count: last.msgCount ?? 0,
+            roles: last.roles ?? '',
+            phases: last.phases ?? '',
+            notice_seen: noticeSeen,
+            elapsed_s: Math.round((Date.now() - t0) / 1000),
+          }))
+          FIRE_EOF
+          node /tmp/fire-canary.mjs 2>&1 | tee /tmp/fire-canary.log
+
+      - name: Step summary (landing verdict)
+        if: always()
+        run: |
+          echo "### WARP canary verdict" >> "$GITHUB_STEP_SUMMARY"
+          RESULT=$(grep -o 'FIRE_RESULT {.*}' /tmp/fire-canary.log | tail -1 | sed 's/^FIRE_RESULT //')
+          if [ -n "$RESULT" ]; then
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            echo "$RESULT" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo ":x: No FIRE_RESULT captured — fire step failed before verdict" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          LANDED=$(echo "$RESULT" | grep -o '"landed":true' || true)
+          if [ -n "$LANDED" ]; then
+            echo "**VERDICT: LANDED — CF/WARP egress passes the Qwen WAF**" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "**VERDICT: NOT LANDED (see FIRE_RESULT above)**" >> "$GITHUB_STEP_SUMMARY"
+          fi
