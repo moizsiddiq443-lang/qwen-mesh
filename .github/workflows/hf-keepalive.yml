@@ -14,8 +14,8 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           code=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Authorization: Bearer $HF_TOKEN" \
-            https://oxmoiz-qwen-mesh-agent.hf.space/)
+             -H "Authorization: Bearer $HF_TOKEN" \
+             https://oxmoiz-qwen-mesh-agent.hf.space/)
           echo "space ping: $code"
           [ "$code" = "200" ] || { echo "SPACE NOT ALIVE (code $code)"; exit 1; }
 
@@ -24,9 +24,20 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           curl -s -o /dev/null -H "Authorization: Bearer $HF_TOKEN" \
-            https://oxmoiz-qwen-mesh-agent.hf.space/config || true
+             https://oxmoiz-qwen-mesh-agent.hf.space/config || true
           sleep 15
           code=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "Authorization: Bearer $HF_TOKEN" \
-            https://oxmoiz-qwen-mesh-agent.hf.space/)
+             -H "Authorization: Bearer $HF_TOKEN" \
+             https://oxmoiz-qwen-mesh-agent.hf.space/)
           echo "after warm: $code"
+
+      - name: Verify qwen gateway child
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          code=$(curl -s -o /tmp/gw.json -w "%{http_code}" \
+             -H "Authorization: Bearer $HF_TOKEN" \
+             https://oxmoiz-qwen-mesh-agent.hf.space/qwen/health) || true
+          echo "gateway health: $code"
+          cat /tmp/gw.json 2>/dev/null | head -c 300; echo
+          [ "$code" = "200" ] || { echo "QWEN GATEWAY DOWN - space restarts on next rebuild; check app.py logs"; exit 1; }
