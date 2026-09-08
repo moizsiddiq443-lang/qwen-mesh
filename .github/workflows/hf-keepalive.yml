@@ -41,3 +41,17 @@ jobs:
           echo "gateway health: $code"
           cat /tmp/gw.json 2>/dev/null | head -c 300; echo
           [ "$code" = "200" ] || { echo "QWEN GATEWAY DOWN - space restarts on next rebuild; check app.py logs"; exit 1; }
+
+      - name: Token fleet refresh (TTL-gated in space; no-op when fleet fresh)
+        timeout-minutes: 15
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          resp=$(curl -s -m 840 -X POST \
+             -H "Authorization: Bearer $HF_TOKEN" \
+             "https://oxmoiz-qwen-mesh-agent.hf.space/qwen/admin/refresh" \
+             -o /tmp/refresh.json -w "%{http_code}") || true
+          echo "refresh http: $resp"
+          # log response with the token masked (never print secrets)
+          sed "s/$HF_TOKEN/***MASKED***/g" /tmp/refresh.json 2>/dev/null | head -c 2000; echo
+          [ "$resp" = "401" ] && { echo "REFRESH AUTH FAILED (401)"; exit 1; } || true
