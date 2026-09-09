@@ -1,0 +1,128 @@
+name: research-cron
+
+on:
+  schedule:
+    - cron: "17 5,17 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: research-cron
+  cancel-in-progress: false
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select topics (round-robin via reports/.state.json, up to 2 per run)
+        id: select
+        run: |
+          node <<'EOF'
+          const fs = require("fs");
+          const topics = fs.readFileSync("topics.txt", "utf8").split("\n").map((s) => s.trim()).filter(Boolean);
+          fs.mkdirSync("reports", { recursive: true });
+          let state = { pointer: 0, total: topics.length };
+          try { state = { ...state, ...JSON.parse(fs.readFileSync("reports/.state.json", "utf8")) }; } catch { /* first run */ }
+          const pointer = Number(state.pointer) || 0;
+          const n = Math.min(2, topics.length);
+          const selected = topics.length
+            ? Array.from({ length: n }, (_, k) => ({ index: (pointer + k) % topics.length, topic: topics[(pointer + k) % topics.length] }))
+            : [];
+          fs.writeFileSync("selected.json", JSON.stringify(selected, null, 2));
+          fs.writeFileSync(
+            "reports/.state.json",
+            JSON.stringify({ pointer: topics.length ? (pointer + n) % topics.length : 0, total: topics.length, last_run: new Date().toISOString() }, null, 2) + "\n"
+          );
+          console.log("count=" + topics.length);
+          console.log("selected=" + JSON.stringify(selected));
+          EOF
+
+      - name: Fire and poll research jobs, write reports (max 25 min poll per topic, 60s cadence)
+        if: steps.select.outputs.count != '0'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          node <<'EOF'
+          (async () => {
+            const fs = require("fs");
+            const BASE = "https://oxmoiz-qwen-mesh-agent.hf.space/qwen";
+            const TOKEN = process.env.HF_TOKEN;
+            if (!TOKEN) { console.error("HF_TOKEN missing"); process.exit(1); }
+            const selected = JSON.parse(fs.readFileSync("selected.json", "utf8"));
+            if (!selected.length) { console.log("no topics selected — skipping"); process.exit(0); }
+            const H = { authorization: "Bearer " + TOKEN, "content-type": "application/json" };
+            const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "topic";
+            const POLL_S = 60, MAX_MIN = 25;
+            const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+            let ok = 0;
+            for (const { index, topic } of selected) {
+              const date = new Date().toISOString().slice(0, 10);
+              try {
+                console.log(`[${index}] firing research: ${topic}`);
+                const pr = await fetch(BASE + "/v1/research", { method: "POST", headers: H, body: JSON.stringify({ topic }) });
+                const pj = await pr.json().catch(() => null);
+                if (pr.status !== 200 || !pj || !pj.job_id) {
+                  console.error(`[${index}] fire failed HTTP ${pr.status}: ${JSON.stringify(pj).slice(0, 300)}`);
+                  continue;
+                }
+                console.log(`[${index}] job_id=${pj.job_id} — polling every ${POLL_S}s (max ${MAX_MIN}min)`);
+                let job = pj, done = false;
+                for (let i = 1; (i - 1) * POLL_S < MAX_MIN * 60; i++) {
+                  await sleep(POLL_S * 1000);
+                  const gr = await fetch(`${BASE}/v1/research/${pj.job_id}`, { headers: H });
+                  job = await gr.json().catch(() => null);
+                  if (!job) { console.error(`[${index}] poll ${i}: bad json`); continue; }
+                  console.log(`[${index}] poll ${i}: status=${job.status} phases=${(job.phases || []).join(",")} len=${job.content_len || 0}`);
+                  if (job.status === "done") { done = true; break; }
+                  if (job.status === "failed" || job.status === "timeout") break;
+                }
+                if (!done) {
+                  console.error(`[${index}] research not done (status=${job && job.status}) — no report written`);
+                  continue;
+                }
+                const dir = `reports/${date}`;
+                fs.mkdirSync(dir, { recursive: true });
+                const refs = Array.isArray(job.references) ? job.references : [];
+                const md = [
+                  `# ${topic}`, "",
+                  `- **Date (UTC):** ${date}`,
+                  `- **Job:** \`${pj.job_id}\` (account ${job.account != null ? job.account : "?"})`,
+                  `- **Phases:** ${(job.phases || []).join(", ") || "n/a"}`,
+                  `- **Source:** oxmoiz/qwen-mesh-agent deep research via GHA compute harness`, "",
+                  "---", "",
+                  String(job.report || "").trim() || "(empty report)", "",
+                  ...(refs.length
+                    ? ["---", "", "## References", "",
+                       ...refs.map((r) => {
+                         const u = typeof r === "string" ? r : (r.url || r.link || "");
+                         const t = typeof r === "string" ? "" : (r.title || "");
+                         return t ? `- [${t}](${u})` : `- ${u}`;
+                       }), ""]
+                    : []),
+                ].join("\n");
+                const file = `${dir}/${slug(topic)}.md`;
+                fs.writeFileSync(file, md);
+                console.log(`[${index}] report written: ${file} (${md.length} bytes)`);
+                ok++;
+              } catch (e) {
+                console.error(`[${index}] error: ${e.message}`);
+              }
+            }
+            console.log(`done: ${ok}/${selected.length} reports`);
+            process.exit(0);
+          })().catch((e) => { console.error("research runner failed:", e.message); process.exit(1); });
+          EOF
+
+      - name: Commit reports and round-robin state
+        run: |
+          git config user.name "qwen-mesh-research"
+          git config user.email "research@qwen-mesh"
+          git add reports selected.json
+          git commit -m "research-cron: reports + state $(date -u +%Y-%m-%dT%H:%M:%SZ)" || echo "nothing to commit"
+          git pull --rebase origin main || true
+          git push

@@ -1,0 +1,106 @@
+name: agent-loop
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Agent iteration topic"
+        required: false
+        default: "free-tier LLM gateway reliability patterns"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: agent-loop
+  cancel-in-progress: true
+
+jobs:
+  agent-iteration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: One autonomous agent iteration (model proposes GitHub query -> search -> model writes brief)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          TOPIC: ${{ github.event.inputs.topic }}
+        run: |
+          node <<'EOF'
+          (async () => {
+            const fs = require("fs");
+            const BASE = "https://oxmoiz-qwen-mesh-agent.hf.space/qwen";
+            const TOKEN = process.env.HF_TOKEN;
+            const TOPIC = process.env.TOPIC || "free-tier LLM gateway reliability patterns";
+            if (!TOKEN) { console.error("HF_TOKEN missing"); process.exit(1); }
+            const H = { authorization: "Bearer " + TOKEN, "content-type": "application/json" };
+            async function chat(messages) {
+              const r = await fetch(BASE + "/v1/chat/completions", {
+                method: "POST", headers: H,
+                body: JSON.stringify({ model: "qwen3.8-max", stream: false, messages }),
+              });
+              const j = await r.json().catch(() => null);
+              if (r.status !== 200 || !j || !j.choices || !j.choices[0] || !j.choices[0].message) {
+                throw new Error("chat HTTP " + r.status + ": " + JSON.stringify(j).slice(0, 300));
+              }
+              return j.choices[0].message.content || "";
+            }
+            const clean = (s) => s.replace(/```[a-z]*\n?/gi, "").replace(/```/g, "").trim()
+              .replace(/^["'`]+|["'`]+$/g, "").split("\n")[0].slice(0, 200);
+
+            console.log("step 1: model proposes a GitHub search query for:", TOPIC);
+            const query = clean(await chat([
+              { role: "system", content: "You are a GitHub research agent. Reply with ONLY a GitHub repository search query (GitHub q syntax, max 160 chars). No quotes, no markdown, no explanation." },
+              { role: "user", content: "Topic: " + TOPIC },
+            ]));
+            console.log("query:", query);
+
+            console.log("step 2: GitHub repository search (unauthenticated, 10 req/min is fine)");
+            let repos = [];
+            const gr = await fetch(
+              "https://api.github.com/search/repositories?q=" + encodeURIComponent(query) + "&sort=stars&order=desc&per_page=5",
+              { headers: { "user-agent": "qwen-mesh-agent-demo", accept: "application/vnd.github+json" } }
+            );
+            if (gr.ok) {
+              const gj = await gr.json();
+              repos = (gj.items || []).map((r) => ({ full_name: r.full_name, stars: r.stargazers_count, url: r.html_url, description: r.description }));
+              console.log("github: " + repos.length + " repos");
+            } else {
+              console.log("github search HTTP " + gr.status + " — continuing without results");
+            }
+
+            console.log("step 3: model writes the brief");
+            const brief = await chat([
+              { role: "system", content: "You are a research agent writing short engineering briefs. Output markdown only." },
+              { role: "user", content: "Topic: " + TOPIC + "\n\nGitHub search query used: " + query + "\n\nTop repositories found:\n" + JSON.stringify(repos, null, 2) + "\n\nWrite a concise markdown brief (150-300 words): the landscape in 2-3 sentences, the top 3 repos with a one-line takeaway each, and one actionable insight for building a free-compute LLM mesh. No preamble." },
+            ]);
+
+            const date = new Date().toISOString().slice(0, 10);
+            const slug = TOPIC.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50) || "topic";
+            const md = [
+              "# agent-loop: " + TOPIC, "",
+              "- **Date (UTC):** " + date,
+              "- **Model:** qwen3.8-max via oxmoiz/qwen-mesh-agent cloud gateway",
+              "- **GitHub query:** `" + query + "`",
+              "- **Repos found:** " + repos.length, "",
+              "---", "",
+              String(brief).trim(), "",
+              "---", "",
+              "Proves GHA runners as free agent-compute hours (2,000 min/mo) with zero account farming.", "",
+            ].join("\n");
+            fs.mkdirSync("reports/agent", { recursive: true });
+            const file = "reports/agent/" + date + "-" + slug + ".md";
+            fs.writeFileSync(file, md);
+            console.log("report written:", file, "(" + md.length + " bytes)");
+          })().catch((e) => { console.error("agent loop failed:", e.message); process.exit(1); });
+          EOF
+
+      - name: Commit agent report
+        run: |
+          git config user.name "qwen-mesh-agent"
+          git config user.email "agent@qwen-mesh"
+          git add reports
+          git commit -m "agent-loop: iteration $(date -u +%Y-%m-%dT%H:%M:%SZ)" || echo "nothing to commit"
+          git pull --rebase origin main || true
+          git push

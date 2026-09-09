@@ -1,0 +1,10 @@
+LLM API reliability engineering: failure semantics, retry budgets, and circuit breakers for multi-provider OpenAI-compatible gateways
+CAPTCHA systems evolution: from puzzle challenges to WAF trust scoring and what it means for browser automation
+Free compute tiers landscape: serverless GPU, HF Spaces ZeroGPU, and CI runner compute for 24/7 agent workloads
+Web-agent architectures compared: state graphs, evaluator-optimizer loops, and DAG orchestrators for multi-agent LLM systems
+SSE proxy patterns: streaming OpenAI-compatible completions through Node and Python reverse proxies without buffering
+Account lifecycle management for shared API pools: token TTL rotation, warm pools, and per-account health scoring
+Anti-bot evasion research trends: TLS/JA3 fingerprinting, WAF risk scoring, and browser session trust signals
+Open-source LLM gateway patterns: failover routers, key rotation, and rate-limit-aware scheduling, a comparative review
+Token rotation strategies: round-robin, least-recently-used, and cooldown heuristics for multi-account API meshes
+GPU serverless frontiers: ZeroGPU, Modal, and Lambda GPU and the economics of free-tier inference compute
