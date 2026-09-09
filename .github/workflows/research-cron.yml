@@ -40,10 +40,11 @@ jobs:
           );
           console.log("count=" + topics.length);
           console.log("selected=" + JSON.stringify(selected));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, "count=" + topics.length + "\n");
           EOF
 
       - name: Fire and poll research jobs, write reports (max 25 min poll per topic, 60s cadence)
-        if: steps.select.outputs.count != '0'
+        if: steps.select.outputs.count > 0
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
