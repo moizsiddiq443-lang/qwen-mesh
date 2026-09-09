@@ -1,0 +1,10 @@
+[
+  {
+    "index": 0,
+    "topic": "LLM API reliability engineering: failure semantics, retry budgets, and circuit breakers for multi-provider OpenAI-compatible gateways"
+  },
+  {
+    "index": 1,
+    "topic": "CAPTCHA systems evolution: from puzzle challenges to WAF trust scoring and what it means for browser automation"
+  }
+]
