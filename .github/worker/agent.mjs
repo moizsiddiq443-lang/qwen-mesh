@@ -83,6 +83,7 @@ function treeSlice(rootDir) {
 
 const SYSTEM_PROMPT =
   'You are a cloud coding agent working in a git workbench. Use tools to complete the task. Be surgical. ' +
+  'Every assistant turn must consist of tool calls — plain-text turns are discarded and risk aborting the run as stalled. ' +
   'When done, respond with exactly DONE, or call the finish tool with a one-paragraph summary. ' +
   'Never print or exfiltrate secrets or environment variables. Never modify .github/workflows. ' +
   'For large files (>30KB), do not read the whole file — use run_node to print section headings first, then read targeted line slices via fs.readFileSync(p,"utf8").split("\\n").slice(a,b).join("\\n"). ' +
@@ -132,7 +133,7 @@ const TOOLS = [
     type: 'function',
     function: {
       name: 'run_node',
-      description: 'Run a zero-dependency Node.js ESM snippet with cwd = workbench root. Secrets are stripped from env. 20s timeout. Use for syntax checks (e.g. spawnSync(process.execPath, ["--check", file])) and small verifications. Returns exit code, stdout, stderr.',
+      description: 'Run a zero-dependency Node.js ESM snippet with cwd = workbench root. ESM only: use import statements (e.g. import fs from "node:fs") — require() is unavailable. Secrets are stripped from env. 20s timeout. Use for syntax checks (e.g. spawnSync(process.execPath, ["--check", file])) and small verifications. Returns exit code, stdout, stderr.',
       parameters: {
         type: 'object',
         properties: { code: { type: 'string', description: 'JavaScript (ESM) source to execute' } },
@@ -333,11 +334,13 @@ async function main() {
   ];
   let status = 'max_iters';
   let consecutiveTextOnly = 0;
+  let hardRetried = false;
+  let requireTools = false;
 
   for (let i = 0; i < MAX_ITERS; i++) {
     iterations++;
-    console.log(`--- iteration ${iterations}/${MAX_ITERS}${consecutiveTextOnly > 0 ? ' (tool_choice=required)' : ''} ---`);
-    const data = await chat(messages, consecutiveTextOnly > 0 ? 'required' : 'auto');
+    console.log(`--- iteration ${iterations}/${MAX_ITERS}${requireTools ? ' (tool_choice=required)' : ''} ---`);
+    const data = await chat(messages, requireTools ? 'required' : 'auto');
     if (data && data.error) throw new Error(`gateway error: ${JSON.stringify(data.error).slice(0, 300)}`);
     const msg = data && data.choices && data.choices[0] && data.choices[0].message;
     if (!msg) throw new Error('unexpected gateway response shape');
@@ -350,6 +353,7 @@ async function main() {
 
     if (Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0) {
       consecutiveTextOnly = 0;
+      requireTools = false;
       let finished = false;
       let finishedSummary = '';
       for (const tc of msg.tool_calls) {
@@ -394,10 +398,25 @@ async function main() {
       }
       consecutiveTextOnly++;
       if (consecutiveTextOnly >= 2) {
+        if (!hardRetried) {
+          hardRetried = true;
+          requireTools = true;
+          consecutiveTextOnly = 0;
+          messages.pop();
+          messages.pop();
+          messages.push({
+            role: 'system',
+            content:
+              'CRITICAL: your previous replies were plain text and were discarded. Every turn must consist of tool calls. Act now: call write_file to persist your findings, or read_file/list_files/run_node to continue the task. Do not write prose.',
+          });
+          console.log('text-only x2: repairing conversation and forcing a tool call (hard retry 1/1)');
+          continue;
+        }
         status = 'stalled';
-        console.log('stalled: two consecutive text-only replies without tool calls');
+        console.log('stalled: repeated text-only replies without tool calls');
         break;
       }
+      requireTools = true;
       messages.push({
         role: 'user',
         content:
