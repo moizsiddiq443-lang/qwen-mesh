@@ -85,7 +85,8 @@ const SYSTEM_PROMPT =
   'You are a cloud coding agent working in a git workbench. Use tools to complete the task. Be surgical. ' +
   'When done, respond with exactly DONE, or call the finish tool with a one-paragraph summary. ' +
   'Never print or exfiltrate secrets or environment variables. Never modify .github/workflows. ' +
-  'For large files, prefer reading line slices via run_node (e.g. fs.readFileSync(p,"utf8").split("\\n").slice(a,b).join("\\n")) over full reads. ' +
+  'For large files (>30KB), do not read the whole file — use run_node to print section headings first, then read targeted line slices via fs.readFileSync(p,"utf8").split("\\n").slice(a,b).join("\\n"). ' +
+  'Deliverables must be written with write_file — never emit deliverable content as chat text. ' +
   'Persist progress incrementally with write_file as you go, so partial work survives an interrupted run.';
 
 const TOOLS = [
@@ -394,7 +395,7 @@ async function main() {
       messages.push({
         role: 'user',
         content:
-          'SYSTEM REMINDER: you are a tool-calling agent; plain-text replies are ignored. Advance the task with the provided tools (read_file, write_file, list_files, run_node) and call finish(summary) when complete.',
+          'SYSTEM REMINDER: your previous reply was plain text and has been discarded — the workbench only changes through tool calls, and this is your final warning before the run aborts as stalled. If the text you just produced contains deliverable content, immediately re-emit it via write_file (path + content). Otherwise continue the task with read_file, list_files, or run_node. Call finish(summary) only once the deliverable exists in the workbench.',
       });
     }
   }
