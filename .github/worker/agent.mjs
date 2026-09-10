@@ -84,7 +84,9 @@ function treeSlice(rootDir) {
 const SYSTEM_PROMPT =
   'You are a cloud coding agent working in a git workbench. Use tools to complete the task. Be surgical. ' +
   'When done, respond with exactly DONE, or call the finish tool with a one-paragraph summary. ' +
-  'Never print or exfiltrate secrets or environment variables. Never modify .github/workflows.';
+  'Never print or exfiltrate secrets or environment variables. Never modify .github/workflows. ' +
+  'For large files, prefer reading line slices via run_node (e.g. fs.readFileSync(p,"utf8").split("\\n").slice(a,b).join("\\n")) over full reads. ' +
+  'Persist progress incrementally with write_file as you go, so partial work survives an interrupted run.';
 
 const TOOLS = [
   {
@@ -260,34 +262,41 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function chat(messages) {
   let lastErr = new Error('gateway unreachable');
-  for (let attempt = 0; attempt <= 3; attempt++) {
-    if (attempt > 0) await sleep(10000);
-    let res;
-    try {
-      res = await fetch(`${GW_BASE}/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${HF_TOKEN}` },
-        body: JSON.stringify({
-          model: MODEL,
-          messages,
-          tools: TOOLS,
-          tool_choice: 'auto',
-          stream: false,
-          max_tokens: 8000,
-        }),
-      });
-    } catch (e) {
-      lastErr = new Error(`gateway fetch failed: ${e.message}`);
-      continue;
+  for (let outer = 0; outer < 3; outer++) {
+    if (outer > 0) {
+      const wait = 60000 * outer;
+      console.log(`gateway 5xx persisting; cooling down ${wait / 1000}s (outer retry ${outer}/2)`);
+      await sleep(wait);
     }
-    if (res.ok) return await res.json();
-    const status = res.status;
-    const bodyText = await res.text().catch(() => '');
-    if (status === 429 || status >= 500) {
-      lastErr = new Error(`gateway HTTP ${status}`);
-      continue;
+    for (let attempt = 0; attempt <= 3; attempt++) {
+      if (attempt > 0) await sleep(10000);
+      let res;
+      try {
+        res = await fetch(`${GW_BASE}/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${HF_TOKEN}` },
+          body: JSON.stringify({
+            model: MODEL,
+            messages,
+            tools: TOOLS,
+            tool_choice: 'auto',
+            stream: false,
+            max_tokens: 8000,
+          }),
+        });
+      } catch (e) {
+        lastErr = new Error(`gateway fetch failed: ${e.message}`);
+        continue;
+      }
+      if (res.ok) return await res.json();
+      const status = res.status;
+      const bodyText = await res.text().catch(() => '');
+      if (status === 429 || status >= 500) {
+        lastErr = new Error(`gateway HTTP ${status}`);
+        continue;
+      }
+      throw new Error(`gateway HTTP ${status} (non-retryable): ${bodyText.slice(0, 300)}`);
     }
-    throw new Error(`gateway HTTP ${status} (non-retryable): ${bodyText.slice(0, 300)}`);
   }
   throw lastErr;
 }
