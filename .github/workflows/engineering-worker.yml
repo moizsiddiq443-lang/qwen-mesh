@@ -12,6 +12,11 @@ on:
         required: false
         type: number
         default: 12
+  push:
+    paths:
+      - '.github/worker/task.json'
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -43,6 +48,16 @@ jobs:
           GW_BASE: https://oxmoiz-qwen-mesh-agent.hf.space/qwen/v1
           WORKBENCH: ${{ github.workspace }}
         run: node .github/worker/agent.mjs
+
+      - name: Archive task file (push-trigger source of truth)
+        if: always()
+        run: |
+          # after a run, move task.json to done/ so the same push never re-triggers
+          if [ -f .github/worker/task.json ]; then
+            mkdir -p .github/worker/done
+            SLUG=$(date -u +%Y%m%d-%H%M%S)
+            git mv .github/worker/task.json ".github/worker/done/task-${SLUG}.json" 2>/dev/null || mv .github/worker/task.json ".github/worker/done/task-${SLUG}.json" || true
+          fi
 
       - name: Commit and push results
         if: always()

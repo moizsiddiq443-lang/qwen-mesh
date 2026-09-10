@@ -17,7 +17,13 @@ let task = '';
 let acceptance = '';
 let filesHint = [];
 try {
-  const parsed = JSON.parse(process.env.TASK_JSON || '{}');
+  let raw = process.env.TASK_JSON;
+  if (!raw || raw === '{}' || raw === 'null' || !raw.trim()) {
+    // push-triggered runs have empty workflow_dispatch inputs — fall back to the task file
+    const tf = path.join(WORKBENCH, '.github', 'worker', 'task.json');
+    if (fs.existsSync(tf)) raw = fs.readFileSync(tf, 'utf8');
+  }
+  const parsed = JSON.parse(raw || '{}');
   if (typeof parsed.task === 'string') task = parsed.task;
   if (typeof parsed.acceptance === 'string') acceptance = parsed.acceptance;
   if (Array.isArray(parsed.files_hint)) filesHint = parsed.files_hint.map(String).filter(Boolean);
