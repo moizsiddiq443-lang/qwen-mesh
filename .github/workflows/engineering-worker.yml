@@ -1,0 +1,61 @@
+name: engineering-worker
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_json:
+        description: 'Task JSON: {task: string, files_hint?: [paths], acceptance?: string}'
+        required: true
+        type: string
+      max_iters:
+        description: 'Max agent iterations (chat turns)'
+        required: false
+        type: number
+        default: 12
+
+permissions:
+  contents: write
+
+concurrency:
+  group: engineering-worker
+  cancel-in-progress: false
+
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Agent loop
+        env:
+          TASK_JSON: ${{ inputs.task_json }}
+          MAX_ITERS: ${{ inputs.max_iters }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          GW_BASE: https://oxmoiz-qwen-mesh-agent.hf.space/qwen/v1
+          WORKBENCH: ${{ github.workspace }}
+        run: node .github/worker/agent.mjs
+
+      - name: Commit and push results
+        if: always()
+        env:
+          TASK_JSON: ${{ inputs.task_json }}
+        run: |
+          git config user.name "engineering-worker[bot]"
+          git config user.email "engineering-worker[bot]@users.noreply.github.com"
+          SLUG=$(node -e "try{const t=JSON.parse(process.env.TASK_JSON).task||'task';console.log(t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40)||'task')}catch(e){console.log('task')}")
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing to commit"
+          else
+            git commit -m "engineering-worker: ${SLUG}"
+            git push
+          fi

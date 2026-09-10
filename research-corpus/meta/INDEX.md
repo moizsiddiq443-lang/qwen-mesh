@@ -1,0 +1,12 @@
+﻿# Research corpus: meta/ — 8 deep-research utilization reports
+
+Harvested deep-research reports studying how to get maximum value from LLM deep-research tools. Copied from the local research-harvest meta batch on 2026-09-10. Total ~578KB.
+
+- **meta-best-practices-for-getting-maximum-value-from-llm-deep-research-tools-topic-formulation-de.md** (40.2 KB) — Best practices for getting maximum value from LLM deep research tools: topic formulation, decomposition, and prompt crafting techniques that yield high-quality research reports (2025-2026 sources)
+- **meta-building-searchable-knowledge-bases-from-llm-research-corpora-local-rag-inverted-indexes-f.md** (58.1 KB) — Building searchable knowledge bases from LLM research corpora: local RAG, inverted indexes, full-text search, manifest design for markdown report collections
+- **meta-diff-monitoring-research-patterns-scheduled-re-research-of-a-domain-with-change-extraction.md** (60 KB) — Diff monitoring research patterns: scheduled re-research of a domain with change extraction â€” what-changed-since-last-report techniques
+- **meta-from-research-to-implementation-workflows-that-convert-research-reports-into-engineering-s.md** (111.1 KB) — From research to implementation: workflows that convert research reports into engineering specs, code scaffolds, and decision memos
+- **meta-llm-deep-research-real-world-use-cases-2026-due-diligence-competitive-intelligence-academi.md** (88.6 KB) — LLM deep research real-world use cases 2026: due diligence, competitive intelligence, academic literature reviews, engineering decision memos, market monitoring â€” what actually works
+- **meta-multi-report-research-synthesis-architectures-storm-autosurvey-and-agentic-survey-generati.md** (85.1 KB) — Multi-report research synthesis architectures: STORM, AutoSurvey, and agentic survey generation systems â€” merging many LLM-generated reports into a coherent knowledge base
+- **meta-research-quality-validation-science-automated-checks-for-llm-generated-research-reports-ci.md** (52.6 KB) — Research quality validation science: automated checks for LLM-generated research reports â€” citation verification, recency metrics, hallucination detection methods
+- **meta-self-refueling-research-loops-how-agentic-systems-generate-follow-up-research-questions-fr.md** (46.9 KB) — Self-refueling research loops: how agentic systems generate follow-up research questions from completed reports (open-questions extraction, curiosity-driven exploration)

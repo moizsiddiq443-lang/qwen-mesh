@@ -1,0 +1,404 @@
+#!/usr/bin/env node
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const WORKBENCH = path.resolve(process.env.WORKBENCH || process.cwd());
+const GW_BASE = (process.env.GW_BASE || '').replace(/\/+$/, '');
+const HF_TOKEN = process.env.HF_TOKEN || '';
+const MODEL = 'qwen3.8-max';
+const MAX_ITERS = Math.max(1, parseInt(process.env.MAX_ITERS || '12', 10) || 12);
+const WORKFLOW_DIR = path.join(WORKBENCH, '.github', 'workflows');
+const READ_CAP = 200 * 1024;
+const TOOL_RESULT_CAP = 300 * 1024;
+
+let task = '';
+let acceptance = '';
+let filesHint = [];
+try {
+  const parsed = JSON.parse(process.env.TASK_JSON || '{}');
+  if (typeof parsed.task === 'string') task = parsed.task;
+  if (typeof parsed.acceptance === 'string') acceptance = parsed.acceptance;
+  if (Array.isArray(parsed.files_hint)) filesHint = parsed.files_hint.map(String).filter(Boolean);
+} catch {}
+
+const filesChanged = [];
+let toolCallCount = 0;
+let iterations = 0;
+
+function jail(p) {
+  const resolved = path.resolve(WORKBENCH, String(p));
+  if (resolved !== WORKBENCH && !resolved.startsWith(WORKBENCH + path.sep)) {
+    throw new Error(`jail violation: "${p}" escapes the workbench`);
+  }
+  return resolved;
+}
+
+function readable(p) {
+  const resolved = jail(p);
+  const rel = path.relative(WORKBENCH, resolved).split(path.sep).join('/');
+  if (rel === '.git' || rel.startsWith('.git/')) {
+    throw new Error(`read of "${rel}" is not allowed`);
+  }
+  return resolved;
+}
+
+function writable(p) {
+  const resolved = jail(p);
+  if (resolved === WORKFLOW_DIR || resolved.startsWith(WORKFLOW_DIR + path.sep)) {
+    throw new Error('forbidden: writing .github/workflows is not allowed');
+  }
+  return resolved;
+}
+
+function walk(dir, depth, out, max) {
+  if (depth > 3 || out.length >= max) return;
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  entries.sort((a, b) => a.name.localeCompare(b.name));
+  for (const ent of entries) {
+    if (out.length >= max) return;
+    if (ent.name === '.git' || ent.name === 'node_modules') continue;
+    const full = path.join(dir, ent.name);
+    const rel = path.relative(WORKBENCH, full).split(path.sep).join('/');
+    if (ent.isDirectory()) {
+      out.push(rel + '/');
+      walk(full, depth + 1, out, max);
+    } else {
+      out.push(rel);
+    }
+  }
+}
+
+function treeSlice(rootDir) {
+  const out = [];
+  walk(rootDir, 1, out, 400);
+  return out.length ? out.join('\n') : '(empty)';
+}
+
+const SYSTEM_PROMPT =
+  'You are a cloud coding agent working in a git workbench. Use tools to complete the task. Be surgical. ' +
+  'When done, respond with exactly DONE, or call the finish tool with a one-paragraph summary. ' +
+  'Never print or exfiltrate secrets or environment variables. Never modify .github/workflows.';
+
+const TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name: 'read_file',
+      description: 'Read a text file inside the workbench. Returns up to 200KB of content.',
+      parameters: {
+        type: 'object',
+        properties: { path: { type: 'string', description: 'path relative to the workbench root' } },
+        required: ['path'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'write_file',
+      description: 'Create or overwrite a text file inside the workbench (parent dirs are created). Writing .github/workflows/* is forbidden.',
+      parameters: {
+        type: 'object',
+        properties: {
+          path: { type: 'string', description: 'path relative to the workbench root' },
+          content: { type: 'string' },
+        },
+        required: ['path', 'content'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'list_files',
+      description: 'List files and directories under a workbench directory (depth 3, max 400 entries). Omit dir for the workbench root.',
+      parameters: {
+        type: 'object',
+        properties: { dir: { type: 'string', description: 'optional directory relative to the workbench root' } },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'run_node',
+      description: 'Run a zero-dependency Node.js ESM snippet with cwd = workbench root. Secrets are stripped from env. 20s timeout. Use for syntax checks (e.g. spawnSync(process.execPath, ["--check", file])) and small verifications. Returns exit code, stdout, stderr.',
+      parameters: {
+        type: 'object',
+        properties: { code: { type: 'string', description: 'JavaScript (ESM) source to execute' } },
+        required: ['code'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'finish',
+      description: 'End the loop: the task is complete. Provide a one-paragraph summary of what was done.',
+      parameters: {
+        type: 'object',
+        properties: { summary: { type: 'string' } },
+        required: ['summary'],
+      },
+    },
+  },
+];
+
+function toolReadFile(args) {
+  const p = readable(args.path);
+  const st = fs.statSync(p);
+  if (st.isDirectory()) return `ERROR: "${args.path}" is a directory`;
+  const len = Math.min(st.size, READ_CAP);
+  const fh = fs.openSync(p, 'r');
+  let text;
+  try {
+    const buf = Buffer.alloc(len);
+    fs.readSync(fh, buf, 0, len, 0);
+    text = buf.toString('utf8');
+  } finally {
+    fs.closeSync(fh);
+  }
+  if (st.size > READ_CAP) text += `\n...[truncated: ${st.size - READ_CAP} more bytes]`;
+  return text;
+}
+
+function toolWriteFile(args) {
+  const p = writable(args.path);
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  const content = typeof args.content === 'string' ? args.content : String(args.content ?? '');
+  fs.writeFileSync(p, content, 'utf8');
+  const rel = path.relative(WORKBENCH, p).split(path.sep).join('/');
+  if (!filesChanged.includes(rel)) filesChanged.push(rel);
+  return `OK: wrote ${rel} (${Buffer.byteLength(content, 'utf8')} bytes)`;
+}
+
+function toolListFiles(args) {
+  const root =
+    args.dir === undefined || args.dir === null || args.dir === ''
+      ? WORKBENCH
+      : readable(args.dir);
+  const out = [];
+  walk(root, 1, out, 400);
+  return out.length ? out.join('\n') : '(empty)';
+}
+
+function toolRunNode(args) {
+  const code = String(args.code ?? '');
+  if (
+    /\.github[\/\\]workflows/i.test(code) &&
+    /(writeFile|appendFile|createWriteStream|unlinkSync|unlink\(|rmSync|rmdirSync)/.test(code)
+  ) {
+    return 'ERROR: snippet refused: it would modify .github/workflows';
+  }
+  const tmp = path.join(os.tmpdir(), `worker-snippet-${process.pid}-${Date.now()}.mjs`);
+  fs.writeFileSync(tmp, code, 'utf8');
+  const childEnv = { ...process.env };
+  for (const k of Object.keys(childEnv)) {
+    if (/^(HF|GH|GITHUB)_/i.test(k) || /^GIT_/i.test(k)) delete childEnv[k];
+  }
+  let res;
+  try {
+    res = spawnSync(process.execPath, [tmp], {
+      timeout: 20000,
+      cwd: WORKBENCH,
+      env: childEnv,
+      encoding: 'utf8',
+      maxBuffer: 16 * 1024 * 1024,
+    });
+  } finally {
+    try {
+      fs.unlinkSync(tmp);
+    } catch {}
+  }
+  if (res.signal || (res.error && res.error.code === 'ETIMEDOUT')) {
+    return 'ERROR: snippet timed out after 20s (killed)';
+  }
+  const stdout = (res.stdout || '').slice(0, 50 * 1024) || '(empty)';
+  const stderr = (res.stderr || '').slice(0, 20 * 1024) || '(empty)';
+  return `exit=${res.status ?? 'signal:' + res.signal}\nstdout:\n${stdout}\nstderr:\n${stderr}`;
+}
+
+function executeTool(name, args) {
+  switch (name) {
+    case 'read_file':
+      return toolReadFile(args);
+    case 'write_file':
+      return toolWriteFile(args);
+    case 'list_files':
+      return toolListFiles(args);
+    case 'run_node':
+      return toolRunNode(args);
+    case 'finish':
+      return 'OK';
+    default:
+      return `ERROR: unknown tool "${name}"`;
+  }
+}
+
+function parseToolArgs(tc) {
+  const raw = tc && tc.function ? tc.function.arguments : undefined;
+  if (raw == null) return {};
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+  if (typeof raw === 'object') return raw;
+  return {};
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function chat(messages) {
+  let lastErr = new Error('gateway unreachable');
+  for (let attempt = 0; attempt <= 3; attempt++) {
+    if (attempt > 0) await sleep(10000);
+    let res;
+    try {
+      res = await fetch(`${GW_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${HF_TOKEN}` },
+        body: JSON.stringify({
+          model: MODEL,
+          messages,
+          tools: TOOLS,
+          tool_choice: 'auto',
+          stream: false,
+          max_tokens: 8000,
+        }),
+      });
+    } catch (e) {
+      lastErr = new Error(`gateway fetch failed: ${e.message}`);
+      continue;
+    }
+    if (res.ok) return await res.json();
+    const status = res.status;
+    const bodyText = await res.text().catch(() => '');
+    if (status === 429 || status >= 500) {
+      lastErr = new Error(`gateway HTTP ${status}`);
+      continue;
+    }
+    throw new Error(`gateway HTTP ${status} (non-retryable): ${bodyText.slice(0, 300)}`);
+  }
+  throw lastErr;
+}
+
+function writeLastRun(status) {
+  const record = {
+    task: task.slice(0, 500),
+    iterations,
+    tool_calls: toolCallCount,
+    files_changed: [...filesChanged],
+    status,
+  };
+  const p = path.join(WORKBENCH, '.github', 'worker', 'last-run.json');
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  fs.writeFileSync(p, JSON.stringify(record, null, 2) + '\n', 'utf8');
+}
+
+function firstUserMessage() {
+  const parts = [];
+  parts.push('## Task', task.trim());
+  if (acceptance) parts.push('', '## Acceptance criteria', acceptance.trim());
+  if (filesHint.length) parts.push('', '## files_hint (read these first)', ...filesHint.map((f) => `- ${f}`));
+  parts.push('', '## Workbench file tree (depth 3, max 400 entries)', '```', treeSlice(WORKBENCH), '```');
+  return parts.join('\n');
+}
+
+async function main() {
+  if (!GW_BASE || !HF_TOKEN) throw new Error('GW_BASE and HF_TOKEN env vars are required');
+  if (!task) throw new Error('TASK_JSON must contain a string field "task"');
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'user', content: firstUserMessage() },
+  ];
+  let status = 'max_iters';
+  let consecutiveTextOnly = 0;
+
+  for (let i = 0; i < MAX_ITERS; i++) {
+    iterations++;
+    console.log(`--- iteration ${iterations}/${MAX_ITERS} ---`);
+    const data = await chat(messages);
+    if (data && data.error) throw new Error(`gateway error: ${JSON.stringify(data.error).slice(0, 300)}`);
+    const msg = data && data.choices && data.choices[0] && data.choices[0].message;
+    if (!msg) throw new Error('unexpected gateway response shape');
+    if (data.usage) {
+      console.log(`usage: prompt=${data.usage.prompt_tokens} completion=${data.usage.completion_tokens} total=${data.usage.total_tokens}`);
+    }
+    const assistant = { role: 'assistant', content: msg.content ?? null };
+    if (Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0) assistant.tool_calls = msg.tool_calls;
+    messages.push(assistant);
+
+    if (Array.isArray(msg.tool_calls) && msg.tool_calls.length > 0) {
+      consecutiveTextOnly = 0;
+      let finished = false;
+      let finishedSummary = '';
+      for (const tc of msg.tool_calls) {
+        toolCallCount++;
+        const name = tc && tc.function ? tc.function.name : '';
+        const args = parseToolArgs(tc);
+        let result;
+        try {
+          result = executeTool(name, args);
+        } catch (e) {
+          result = `ERROR: ${e && e.message ? e.message : String(e)}`;
+        }
+        if (name === 'finish') {
+          finished = true;
+          finishedSummary = String(args.summary || '');
+          console.log('tool finish');
+        } else {
+          console.log(`tool ${name}: ${String(result).slice(0, 120).replace(/\s+/g, ' ')}`);
+        }
+        messages.push({
+          role: 'tool',
+          tool_call_id: (tc && tc.id) || `call_${toolCallCount}`,
+          content: String(result).slice(0, TOOL_RESULT_CAP),
+        });
+      }
+      if (finished) {
+        status = 'done';
+        console.log(`summary: ${finishedSummary.slice(0, 400)}`);
+        break;
+      }
+    } else {
+      const text = String(msg.content || '').trim();
+      if (text === 'DONE' || /(^|\n)DONE\s*$/.test(text)) {
+        status = 'done';
+        break;
+      }
+      consecutiveTextOnly++;
+      if (consecutiveTextOnly >= 2) {
+        status = 'stalled';
+        console.log('stalled: two consecutive text-only replies without tool calls');
+        break;
+      }
+      messages.push({
+        role: 'user',
+        content:
+          'SYSTEM REMINDER: you are a tool-calling agent; plain-text replies are ignored. Advance the task with the provided tools (read_file, write_file, list_files, run_node) and call finish(summary) when complete.',
+      });
+    }
+  }
+
+  writeLastRun(status);
+  console.log(`status=${status} iterations=${iterations} tool_calls=${toolCallCount} files_changed=${filesChanged.length}`);
+  if (status !== 'done') process.exitCode = 2;
+}
+
+main().catch((e) => {
+  console.error(`FATAL: ${e && e.message ? e.message : String(e)}`);
+  try {
+    writeLastRun('error');
+  } catch {}
+  process.exitCode = 1;
+});
