@@ -266,7 +266,7 @@ async function chat(messages, toolChoice = 'auto') {
   let lastErr = new Error('gateway unreachable');
   for (let outer = 0; outer < 3; outer++) {
     if (outer > 0) {
-      const wait = 60000 * outer;
+      const wait = outer === 1 ? 300000 : 600000;
       console.log(`gateway 5xx persisting; cooling down ${wait / 1000}s (outer retry ${outer}/2)`);
       await sleep(wait);
     }
