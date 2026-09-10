@@ -261,7 +261,7 @@ function parseToolArgs(tc) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function chat(messages) {
+async function chat(messages, toolChoice = 'auto') {
   let lastErr = new Error('gateway unreachable');
   for (let outer = 0; outer < 3; outer++) {
     if (outer > 0) {
@@ -280,7 +280,7 @@ async function chat(messages) {
             model: MODEL,
             messages,
             tools: TOOLS,
-            tool_choice: 'auto',
+            tool_choice: toolChoice,
             stream: false,
             max_tokens: 8000,
           }),
@@ -336,8 +336,8 @@ async function main() {
 
   for (let i = 0; i < MAX_ITERS; i++) {
     iterations++;
-    console.log(`--- iteration ${iterations}/${MAX_ITERS} ---`);
-    const data = await chat(messages);
+    console.log(`--- iteration ${iterations}/${MAX_ITERS}${consecutiveTextOnly > 0 ? ' (tool_choice=required)' : ''} ---`);
+    const data = await chat(messages, consecutiveTextOnly > 0 ? 'required' : 'auto');
     if (data && data.error) throw new Error(`gateway error: ${JSON.stringify(data.error).slice(0, 300)}`);
     const msg = data && data.choices && data.choices[0] && data.choices[0].message;
     if (!msg) throw new Error('unexpected gateway response shape');
