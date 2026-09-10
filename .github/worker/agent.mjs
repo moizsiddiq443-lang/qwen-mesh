@@ -87,6 +87,8 @@ const SYSTEM_PROMPT =
   'When done, respond with exactly DONE, or call the finish tool with a one-paragraph summary. ' +
   'Never print or exfiltrate secrets or environment variables. Never modify .github/workflows. ' +
   'For large files (>30KB), do not read the whole file — use run_node to print section headings first, then read targeted line slices via fs.readFileSync(p,"utf8").split("\\n").slice(a,b).join("\\n"). ' +
+  'The gateway rate-limits heavy traffic, so budget your calls: one run_node call can print slices from MULTIPLE files at once — batch reads instead of one call per file. ' +
+  'Start the deliverable early: write a draft skeleton with write_file after the first reports are read, then extend it with write_file after every couple of additional reports instead of saving everything for the end. ' +
   'Deliverables must be written with write_file — never emit deliverable content as chat text. ' +
   'Persist progress incrementally with write_file as you go, so partial work survives an interrupted run.';
 
