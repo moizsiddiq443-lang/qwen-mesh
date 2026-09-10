@@ -363,9 +363,15 @@ async function main() {
           result = `ERROR: ${e && e.message ? e.message : String(e)}`;
         }
         if (name === 'finish') {
-          finished = true;
-          finishedSummary = String(args.summary || '');
-          console.log('tool finish');
+          if (filesChanged.length === 0) {
+            result =
+              'ERROR: finish rejected: zero files were written to the workbench this run. Write the deliverable(s) with write_file first, then call finish again.';
+            console.log('tool finish REJECTED: no files written');
+          } else {
+            finished = true;
+            finishedSummary = String(args.summary || '');
+            console.log('tool finish');
+          }
         } else {
           console.log(`tool ${name}: ${String(result).slice(0, 120).replace(/\s+/g, ' ')}`);
         }
