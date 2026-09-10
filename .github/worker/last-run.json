@@ -1,7 +1,7 @@
 {
   "task": "Read the 8 research reports in research-corpus/meta/ (they study deep-research utilization best practices). Produce research-corpus/meta/DOCTRINE.md: the consensus best-practice doctrine for getting maximum value from deep research - (1) topic crafting rules (specificity, scope bounds, time windows), (2) single vs parallel vs sprint decision table, (3) synthesis patterns, (4) quality gates, (5) failure modes and mitigations. Cite which report (filename) supports each rule. Dense, practical, <=15",
-  "iterations": 11,
-  "tool_calls": 6,
+  "iterations": 8,
+  "tool_calls": 5,
   "files_changed": [],
   "status": "stalled"
 }
