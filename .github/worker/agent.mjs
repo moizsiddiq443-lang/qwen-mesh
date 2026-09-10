@@ -16,6 +16,9 @@ const TOOL_RESULT_CAP = 300 * 1024;
 let task = '';
 let acceptance = '';
 let filesHint = [];
+let mode = '';
+let outputPath = '';
+let promptFiles = [];
 try {
   let raw = process.env.TASK_JSON;
   if (!raw || raw === '{}' || raw === 'null' || !raw.trim()) {
@@ -27,6 +30,9 @@ try {
   if (typeof parsed.task === 'string') task = parsed.task;
   if (typeof parsed.acceptance === 'string') acceptance = parsed.acceptance;
   if (Array.isArray(parsed.files_hint)) filesHint = parsed.files_hint.map(String).filter(Boolean);
+  if (typeof parsed.mode === 'string') mode = parsed.mode;
+  if (typeof parsed.output_path === 'string') outputPath = parsed.output_path;
+  if (Array.isArray(parsed.prompt_files)) promptFiles = parsed.prompt_files.map(String).filter(Boolean);
 } catch {}
 
 const filesChanged = [];
@@ -333,8 +339,40 @@ function firstUserMessage() {
   return parts.join('\n');
 }
 
+async function singleShot() {
+  // Deterministic synthesis mode: build a context pack from prompt_files, ONE brain call,
+  // write the reply to output_path. No tools — immune to tool-call flakes. (Doctrine: agentic
+  // for file surgery, single-shot for synthesis.)
+  const files = promptFiles.map((f) => jail(f));
+  const budget = 700_000;
+  const perFile = Math.max(8_000, Math.floor(budget / Math.max(1, files.length)));
+  const packParts = [];
+  for (const f of files) {
+    let t = fs.readFileSync(f, 'utf8');
+    if (t.length > perFile) t = t.slice(0, perFile) + '\n...[truncated for budget]';
+    packParts.push(`===== ${path.basename(f)} =====\n${t}`);
+  }
+  const prompt = `${task}\n\n## Source material (${files.length} files)\n\n${packParts.join('\n\n')}\n\nWrite the complete deliverable now. Output ONLY the deliverable content (markdown), nothing else.`;
+  console.log(`single-shot: ${files.length} files, pack ${prompt.length} chars`);
+  const data = await chat([
+    { role: 'system', content: 'You are a principal-level synthesizer. Produce dense, practical, well-structured markdown deliverables. Follow the requested structure and length exactly.' },
+    { role: 'user', content: prompt },
+  ], 'auto');
+  if (data && data.error) throw new Error(`gateway error: ${JSON.stringify(data.error).slice(0, 300)}`);
+  const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (!content) throw new Error('empty completion');
+  if (!outputPath) throw new Error('TASK_JSON must contain output_path for single_shot mode');
+  const outPath = path.join(WORKBENCH, outputPath);
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
+  fs.writeFileSync(outPath, String(content));
+  filesChanged.push(outputPath);
+  console.log(`single-shot wrote ${outputPath} (${String(content).length} chars)`);
+  filesChanged.forEach((f) => console.log(`changed: ${f}`));
+}
+
 async function main() {
   if (!GW_BASE || !HF_TOKEN) throw new Error('GW_BASE and HF_TOKEN env vars are required');
+  if (mode === 'single_shot') return singleShot();
   if (!task) throw new Error('TASK_JSON must contain a string field "task"');
   const messages = [
     { role: 'system', content: SYSTEM_PROMPT },
