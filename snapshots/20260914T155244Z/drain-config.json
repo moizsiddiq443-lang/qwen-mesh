@@ -1,0 +1,42 @@
+{
+ "v": 3,
+ "enabled": true,
+ "gateway": "http://127.0.0.1:9701",
+ "tick_interval_s": 10,
+ "poll_interval_s": 90,
+ "topic_max_chars": 4000,
+ "min_accounts": 2,
+ "target_per_account_per_day": 10,
+ "global_daily_cap": 30,
+ "start_spacing_base_s": 90,
+ "start_spacing_jitter_pct": 30,
+ "per_account_min_gap_min": 25,
+ "persona": {
+  "window_start_hour": 8,
+  "window_end_hour": 24,
+  "start_offset_max_min": 90,
+  "burn_min": 1.4,
+  "burn_max": 2.4
+ },
+ "quiet_hours": {
+  "start": 23,
+  "end": 8
+ },
+ "overnight_per_account_max_per_h": 3,
+ "overnight_global_max_per_h": 17,
+"max_inflight": 2,
+  "max_inflight_overnight": 1,
+ "cap_sig_min_bytes": 1000,
+ "fence_hours": 12,
+ "kill_switch": {
+  "max_challenges_per_day": 3,
+  "min_success_rate": 0.8,
+  "min_success_n": 10,
+  "alarm_ttl_h": 2
+ },
+ "pace_factor_after_alarm": 0.5,
+ "degraded_pace_h": 2,
+ "fire_limit_per_run": 0,
+ "backoff_base_min": 5,
+ "backoff_cap_min": 1440
+}
