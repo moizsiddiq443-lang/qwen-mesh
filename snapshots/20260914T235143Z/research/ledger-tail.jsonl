@@ -1,0 +1,23 @@
+{"ts":"2026-09-14T21:45:51.785Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-14T21:46:12.935Z","event":"forge_batch","batch":1,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-14T21:48:02.850Z","event":"forge_batch","batch":2,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-14T21:51:00.168Z","event":"forge_batch","batch":3,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-14T21:52:40.703Z","event":"forge_batch","batch":4,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-14T21:57:28.178Z","event":"forge_batch","batch":5,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-14T21:59:24.026Z","event":"forge_run","batches":6,"queued":20,"stock_before":0,"stock_after":20}
+{"ts":"2026-09-14T22:00:53.547Z","event":"rasi_loop_fail","queue_id":"f20260914214802-1","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-14T22:00:53.616Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-14T22:15:55.068Z","event":"rasi_loop_fail","queue_id":"f20260914214802-1","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-14T22:15:55.137Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-14T22:30:56.839Z","event":"rasi_loop_fail","queue_id":"f20260914214802-1","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-14T22:30:56.909Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-14T22:45:58.244Z","event":"rasi_loop_fail","queue_id":"f20260914214802-2","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-14T22:45:58.311Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-14T23:01:00.455Z","event":"rasi_loop_fail","queue_id":"f20260914214802-2","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-14T23:01:00.522Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-14T23:16:01.878Z","event":"rasi_loop_fail","queue_id":"f20260914214802-2","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-14T23:16:01.946Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-14T23:31:03.513Z","event":"rasi_loop_fail","queue_id":"f20260914214802-3","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-14T23:31:03.580Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-14T23:46:04.915Z","event":"rasi_loop_fail","queue_id":"f20260914214802-3","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-14T23:46:04.989Z","event":"evolve","signals":0,"proposal":null,"applied":false}
