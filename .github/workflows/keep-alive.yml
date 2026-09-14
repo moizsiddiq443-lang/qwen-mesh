@@ -1,0 +1,27 @@
+name: keep-alive
+
+on:
+  schedule:
+    - cron: "0 */10 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping HF space APIs (status only, never chat.qwen.ai)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          TOKEN=$(printf '%s' "$HF_TOKEN" | tr -d '[:space:]')
+          code1=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $TOKEN" \
+            https://huggingface.co/api/spaces/oxmoiz/qwen-mesh-agent)
+          code2=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $TOKEN" \
+            https://huggingface.co/api/spaces/oxmoiz/1)
+          echo "ping oxmoiz/qwen-mesh-agent: $code1"
+          echo "ping oxmoiz/1: $code2"
