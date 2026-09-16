@@ -1,0 +1,15 @@
+{
+ "assignments": {
+  "1": "direct"
+ },
+ "parked": {},
+ "history": [
+  {
+   "at": "2026-09-13T01:29:11.761Z",
+   "account": "1",
+   "from": null,
+   "to": "direct",
+   "reason": "auto-assign default"
+  }
+ ]
+}
