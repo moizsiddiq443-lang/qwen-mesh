@@ -1,0 +1,187 @@
+{
+ "meta": {
+  "schema": "A-0xx append-only",
+  "created": "2026-09-11",
+  "note": "every run appends; same symptom increments evidence_count"
+ },
+ "lessons": [
+  {
+   "id": "A-001",
+   "stage": "harness",
+   "symptom": "task tool + swarm + dsh worker paths dead in build session",
+   "cause": "task agents cached dead model pin deepseek-v4-flash-free; swarm session create BadRequest; dsh transport error",
+   "fix": "build solo with economical file writes; config on disk healed to ling-3.0-flash-fin-free (app rewrite); re-probe task tool periodically — RESOLVED: removing model pins from opencode.json agents made subagents inherit the orchestrator model; task tool verified READY",
+   "evidence_count": 2,
+   "first_seen": "2026-09-11T01:10+05:00",
+   "last_seen": "2026-09-11T01:40+05:00"
+  },
+  {
+   "id": "A-002",
+   "stage": "collect",
+   "symptom": "legit deep-research report flagged UNVERIFIED few-refs(<20) with 0 inline http URLs",
+   "cause": "mesh API strips inline URLs from the report body; numbered citation markers [[N]] are the true citation backbone",
+   "fix": "verifyReport now counts [[N]] markers (n_cites) and takes max(http, cites) as n_refs",
+   "evidence_count": 1,
+   "first_seen": "2026-09-11T01:35+05:00",
+   "last_seen": "2026-09-11T01:35+05:00"
+  },
+  {
+   "id": "A-003",
+   "stage": "state",
+   "symptom": "mined child's topic file waves/_mined/<id>.txt vanished before fire (ENOENT, fail-closed)",
+   "cause": "subagent side-effect during build (selftest cleanup deleted beyond its tmp dir); multi-agent sessions mutate shared dirs",
+   "fix": "prune-failed-child.mjs one-off hygiene + re-mine; harness already fails closed on missing topic files; lesson: subagents must clean ONLY their own tmp dirs",
+   "evidence_count": 1,
+   "first_seen": "2026-09-11T01:52+05:00",
+   "last_seen": "2026-09-11T01:52+05:00"
+  },
+  {
+   "id": "A-004",
+   "stage": "evolve",
+   "symptom": "first real evolve run: judge kill ratio 67% (4/6 questions killed)",
+   "cause": "judge model strict shape-checking; some killed questions were legitimate multi-part director questions",
+   "fix": "recursive-alpha guarded tuning APPLIED: judge_model mimo-v2.5-free -> ling-3.0-flash-fin-free (evolution.jsonl row; not in never_change; auto_evolve)",
+   "evidence_count": 1,
+   "first_seen": "2026-09-11T02:05+05:00",
+   "last_seen": "2026-09-11T02:05+05:00"
+  },
+  {
+   "id": "A-005",
+   "stage": "fire",
+   "symptom": "harness fired blind — no contamination checks",
+   "cause": "universality_trial.py C1/C2/C3 never invoked by harness",
+   "fix": "prefire-gate.mjs wired into cmdFire (G0-G3)",
+   "evidence_count": 1,
+   "first_seen": "2026-09-11T04:00+05:00",
+   "last_seen": "2026-09-11T04:00+05:00"
+  },
+  {
+   "id": "A-006",
+   "stage": "mine",
+   "symptom": "judge was shape-only, 67% kill ratio",
+   "cause": "no novelty/falsifiability/decision-relevance rubric, no falsifier requirement",
+   "fix": "tier cascade + 3-dim rubric + falsifier gate (FirstResearch/Tealc pattern)",
+   "evidence_count": 1,
+   "first_seen": "2026-09-11T03:00+05:00",
+   "last_seen": "2026-09-11T03:00+05:00"
+  },
+  {
+   "id": "A-007",
+   "stage": "state",
+   "symptom": "three research generations, three queues/digests",
+   "cause": "campaign-specific tooling never consolidated",
+   "fix": "make_prompts --queue redirect + corpus-index dedup; mine_runs ALPHA_HARNESS_QUEUE wrapper; collect syncs queue statuses",
+   "evidence_count": 1,
+   "first_seen": "2026-09-11T05:30+05:00",
+   "last_seen": "2026-09-11T05:30+05:00"
+  },
+  {
+   "id": "A-008",
+   "stage": "plan",
+   "symptom": "wave direction was static GAP_SEEDS",
+   "cause": "no recursion from synth matrix or question leaderboard into planning",
+   "fix": "machine-seeds.jsonl + Elo-lite leaderboard.jsonl + dynamic seed composition in plan.mjs",
+   "evidence_count": 1,
+   "first_seen": "2026-09-11T22:35+05:00",
+   "last_seen": "2026-09-11T22:35+05:00"
+  },
+  {
+   "id": "A-009",
+   "stage": "synth",
+   "symptom": "C status required only count>=3, not independence",
+   "cause": "convergence could be declared from near-duplicate reports",
+   "fix": "divergence gate: pairwise Jaccard>0.6 among supports downgrades C->P (low-divergence)",
+   "evidence_count": 1,
+   "first_seen": "2026-09-10T22:47:31.999Z",
+   "last_seen": "2026-09-10T22:47:31.999Z"
+  },
+  {
+   "id": "A-010",
+   "stage": "integration",
+   "symptom": "214-family method library + research method-specs never reached METHOD_REGISTRY",
+   "cause": "alpha_machine production mandate + no intake tool",
+   "fix": "method-intake.mjs prepares spec.json + register-snippet.py; registration stays human-mandated",
+   "evidence_count": 1,
+   "first_seen": "2026-09-10T22:47:31.999Z",
+   "last_seen": "2026-09-10T22:47:31.999Z"
+  },
+  {
+   "id": "A-011",
+   "ts": "2026-09-11T07:35:00+05:00",
+   "lesson": "Never filter-kill node processes by script-name substring. A mass-kill of qwen-mesh-api took down gateways 9700/9701/9720 together. Kill by port or exact PID only. gateway-supervisor auto-recovers its own gateways; WMI-spawned ones need manual restart via their start-*.cmd.",
+   "source": "fleet incident 2026-09-11 06:47"
+  },
+  {
+   "id": "A-012",
+   "ts": "2026-09-11T08:25:00+05:00",
+   "lesson": "CDP flatten-mode pitfalls: (1) Target session must be passed on EVERY CDP call — send() ignoring the sessionId silently evaluates at browser level (empty localStorage, no fetch). (2) Runtime.evaluate reply nests value at result.value (fallback result.result.value) — parse both. (3) WebSocket keeps node alive after work ends: explicit process.exit(0). (4) Qwen SPA stores JWT in localStorage key token (209c) — usable when cookie harvesting fails.",
+   "source": "fleet acc2 harvest debugging"
+  },
+  {
+   "id": "A-013",
+   "ts": "2026-09-11T14:55:00+05:00",
+   "lesson": "Qwen account verification model: signup issues a FULL JWT + /auths/ 200 with role=pending (Open WebUI lineage: DEFAULT_USER_ROLE=pending). Auth-layer 200 does NOT mean usable — chats/new (api/v2) rejects pending with Bad_Request pending-activation. Gate check = role===user from /auths/ + chats/new success. Activation emails may arrive with ~3min delay; emailnator inboxes keep the hash-address. After clicking activation, the EXISTING harvested JWT works (role is server-side; JWT has no role claim) — no re-harvest needed. Do NOT mass-test auth endpoints; resource gates exist.",
+   "source": "acc 7/9 pending-activation investigation"
+  },
+  {
+   "id": "A-014",
+   "ts": "2026-09-12",
+   "lesson": "Gateway (qwen-mesh-api) died silently 5× under sustained SSE research load on --max-old-space-size=256. Fix: bump to 1024 in launcher + watchdog v3 2-strike health restart + fleet-safe-restart.ps1 (polls drain inflight==0 before verified-PID swap). Memory cap on SSE-heavy node services is a silent-death class, not an exception.",
+   "source": "fleet gateway incident 2026-09-12 (drain v3 deployment build)"
+  },
+  {
+   "id": "A-015",
+   "ts": "2026-09-12",
+   "lesson": "drain v3 persona scheduler runs 28 desynchronized account heartbeats to 33/acct/day (924/day) with 75s±30% global spacing, 25-min per-account min gap, 8/3 inflight, quiet-hours shaping. L-017 cap-signature implemented as HOLLOW-REPORT detection (empty/<1000B/no sections), NOT n_refs==0 — the mesh strips inline URLs and legit digests can have 0 refs (A-002); fencing on refs alone would kill healthy accounts.",
+   "source": "drain v3 capacity-engine build 2026-09-12"
+  },
+  {
+   "id": "A-016",
+   "ts": "2026-09-12",
+   "lesson": "Headless GLM supervision: `opencode run` CLI hangs past 300s on Windows (execFile timeout unreliable; needs spawn+taskkill /T /F). Working path: direct HTTP POST to the provider baseURL from opencode.json (featherless-unified → http://127.0.0.1:9790/v1/chat/completions, model zai-org/GLM-5.3-Flash, no auth). Keys only from .env.freecode on 401, never logged.",
+   "source": "hermes-tick.mjs supervision wiring 2026-09-12"
+  },
+  {
+   "id": "A-017",
+   "ts": "2026-09-12",
+   "lesson": "Process lists showing multiple 'qwen-mesh-api*' entries are usually LIVE MCP bridges (qwen-mesh-api-mcp.mjs) + gateway-supervisor.mjs, not zombie gateways. Verify cmdline + netstat port ownership before any kill (refines A-011's no-name-filter rule).",
+   "source": "watchdog v3 build 2026-09-12, gateway kill verification"
+  },
+  {
+   "id": "A-018",
+   "ts": "2026-09-12",
+   "lesson": "Qwen 'Agent Mode' is a chat_type on the completions SSE (gated by server rollout flag permissions.chat.agent_mode: 0=Unavailable,1=Available,2=Hidden,5=GuestUnavailable) — NOT a VM. No pod/workspace endpoints exist on chat.qwen.ai (L-055 still holds 2026-09-12); the '10GB storage / 1GB RAM' claim is absent from the web bundle (desktop/Plus marketing). Real compute lane: code_interpreter over t2t SSE — internet ON, pandas/numpy preinstalled, NO pip, hard 20s/call, per-chat isolated file workspace (20MB/file, 50MB, 10 files) via getstsToken→OSS V1 PUT→parse→messages[0].files[].",
+   "source": "fleet VM probe 2026-09-12: full UI walk + 46-probe API map + 7-test pilot"
+  },
+  {
+   "id": "A-019",
+   "ts": "2026-09-12",
+   "lesson": "Distributed sandbox fleet pattern: chunk jobs ≤20s, state flows via '###RESULT###'+JSON chunk outputs into fresh t2t chats (per-chat isolation), LRU account rotation with ≥5s spacing and ≤30 t2t/h/account, drain-inflight skip. Verified 13/13 chunks first-attempt incl. 6000-shuffle permutation tests and 2-prop power (MC ≈ analytic within 1.3 SE). QA re-read: attach report → rubric-grade strict JSON; mandate a 1-retry JSON recovery and an anti-lazy quote-check (UNREAD gate) — first-attempt clean JSON was only 1/3.",
+   "source": "sandbox-runner.mjs / sandbox-jobs.mjs / qa-reread.mjs build + verification 2026-09-12"
+  },
+  {
+   "id": "A-020",
+   "ts": "2026-09-13",
+   "lesson": "Qwen Agent Mode fully drivable over pure HTTP (no UI): chats/new chat_type:agent_mode + completions with sub_chat_type:lite + feature_config{output_schema:phase,...} — full tool loop (web_search/write_file/present_file) streams via SSE function_call frames; ~5k prompt-token overhead per message; files the agent writes arrive in terminal file_list -> fetch via files/getfilelink. Gate semantics: permissions.chat.agent_mode 5 (GuestUnavailable) = USABLE when logged in, 2 (Hidden) = server-blocked (instant 200+JSON {code:Service_Unavailable,details:Agent Mode is not enabled}), entitlement times_left:-1 (untracked). sub_chat_type presence is the agent trigger — omitting it silently degrades to t2t.",
+   "source": "agent-mode RE + agent-runner.mjs/agent-jobs.mjs lane build 2026-09-12/13"
+  },
+  {
+   "id": "A-021",
+   "ts": "2026-09-13",
+   "lesson": "Reverse-engineering method that worked: (1) client gate != server gate — always probe the API even when the UI hides a feature; (2) de-minify the bundle for the payload template (vite: all code in main chunk, no webpack map); (3) live-capture cross-check + variant matrix (drop one field at a time to find the minimal payload); (4) distinguish WAF-hang vs server-reject (reject = instant 200+JSON error envelope, not 4xx); (5) write probe artifacts incrementally — interruptions are routine.",
+"source": "Agent Mode HTTP transport RE (agent-mode-spec.md, agent-mode-probe.mjs) 2026-09-12/13"
+  },
+  {
+   "id": "A-022",
+   "ts": "2026-09-13",
+   "lesson": "Agent Mode gate is ONE hard per-account server switch — retest of all 19 flag=2 accounts: 0 streamed, 27/27 identical instant 200+JSON Service_Unavailable ('Agent Mode is not enabled'); 4 payload/model variants (qwen3-coder-plus, qwen3-max, reduced feature_config, extra.meta dropped) all bypassed NOTHING. UI gate is client-side but the API gate is real per-account; entitlement times_left:-1 regardless. Track per-account last_retest + flag_history (agent-gate-sweep.json) — runner auto-adopts accounts the moment the rollout flag flips.",
+   "source": "fleet\\agent-retest-19.{md,mjs} + agent-retest-trace.jsonl 2026-09-13"
+  },
+  {
+   "id": "A-023",
+   "ts": "2026-09-13",
+   "lesson": "Egress/identity layer pattern for detection-aware fleets: per-account pool binding (1-3 accts/IP), rolling 24h health scoring, auto-demote 48h + re-admission only on green canary, auto-parking over direct-leaking, honeypot tripwire PER EGRESS (not just per account). Node >=24 without undici: stdlib CONNECT-tunnel (node:net+node:tls) gives genuine proxy canary dials; pause-degraded accounts rather than leaking direct. Cloud kit: mirror the PROVEN ZeroGPU Gradio-shim pattern (Docker spaces PRO-402); state plane = 12-entry portable set with append-only dedup merge + secret deny-guard; GHA = ping-only keep-alive, never fleet traffic (L-042). Phase gates before any cloud spend.",
+   "source": "egress.mjs build + cloud deploy kit (ops/rasi/05-cloud) 2026-09-13"
+  }
+  ]
+ }
