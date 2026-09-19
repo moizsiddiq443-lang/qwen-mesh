@@ -1,10 +1,10 @@
 [
   {
-    "index": 2,
-    "topic": "Free compute tiers landscape: serverless GPU, HF Spaces ZeroGPU, and CI runner compute for 24/7 agent workloads"
+    "index": 4,
+    "topic": "SSE proxy patterns: streaming OpenAI-compatible completions through Node and Python reverse proxies without buffering"
   },
   {
-    "index": 3,
-    "topic": "Web-agent architectures compared: state graphs, evaluator-optimizer loops, and DAG orchestrators for multi-agent LLM systems"
+    "index": 5,
+    "topic": "Account lifecycle management for shared API pools: token TTL rotation, warm pools, and per-account health scoring"
   }
 ]
