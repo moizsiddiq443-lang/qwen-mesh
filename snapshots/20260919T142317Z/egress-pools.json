@@ -1,0 +1,34 @@
+{
+  "pools": {
+    "direct": {
+      "type": "direct",
+      "note": "residential home IP -- trust anchor"
+    },
+    "hf-worker-1": {
+      "type": "proxy",
+      "url": "https://<placeholder-not-used>",
+      "class": "hf-aws",
+      "proven": true,
+      "note": "L-042"
+    },
+    "vps-eu-1": {
+      "type": "proxy",
+      "url": "",
+      "class": "vps",
+      "proven": false,
+      "note": "canary required"
+    }
+  },
+  "binding": {
+    "mode": "one-to-many",
+    "max_accounts_per_ip": 3,
+    "rotation": {
+      "on": ["challenge", "cap_signature", "health<0.6"],
+      "cooldown_h": 48
+    }
+  },
+  "health": {
+    "window_h": 24,
+    "demote_below": 0.6
+  }
+}
