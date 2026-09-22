@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-14T15:48:55.041Z",
+  "generated_at": "2026-09-22T22:04:42.500Z",
   "note": "counts only - digests.jsonl/qa-scores.jsonl never uploaded wholesale to the state repo",
   "counts": {
     "queue.jsonl": 0,

@@ -26,6 +26,8 @@
 | A-020 | 2026-09-13 | Agent Mode is fully drivable over HTTP (chat_type agent_mode + sub_chat_type lite + output_schema phase): flag 5 = usable logged-in, flag 2 = server-blocked; omitting sub_chat_type silently degrades to t2t. |
 | A-021 | 2026-09-13 | RE method that works: client gate ≠ server gate (probe anyway), de-minify the bundle, drop-one-field variant matrix, distinguish WAF-hang vs instant-200 JSON reject, write probe artifacts incrementally. |
 
+| A-026 | 2026-09-17 | New-Space creation is hard 402 PRO-gated even for Gradio SDK (extends L-042): valid fine-grained oxmoiz token + `create_repo(space, sdk=gradio, private=True)` returned 402, no partial repo created; fallback = PRO (~$9/mo) or extend `oxmoiz/qwen-mesh-agent`. (Full entry in lessons.json A-026 — the generated table above lags the JSON source.) |
+
 ## Top lessons for new agents (5 lines)
 
 1. **A-011** — Never kill processes by name substring; kill by port or exact PID only, or you take down every gateway on the box.
@@ -33,3 +35,7 @@
 3. **A-017** — Before killing anything, verify cmdline + port ownership: what looks like a zombie is usually a live MCP bridge.
 4. **A-018** — Agent Mode is a chat_type, not a VM; the only real compute lane is code_interpreter (20s/call, no pip, per-chat workspace).
 5. **A-020** — Drive the agent lane over HTTP: chat_type agent_mode + sub_chat_type lite is the trigger; flag 5 works logged-in, flag 2 is server-blocked; without sub_chat_type you silently get plain t2t.
+## L-043 (2026-09-17) 402-fallback onto a live multi-sidecar HF space
+- NEVER replace app.py on a live multi-surface space (oxmoiz/qwen-mesh-agent: /v1 zen-router, /qwen 9701, /qwen/glm 9721, /qwen/admin). Requires subdir + port-offset merge (rasi-core/ subdir, QWEN_API_PORT=9702, one prewarm Popen line, /rasi/metrics proxy). Rollback = push captured original app.py back (rollback-space-app.py, sha256 92E0690E...).
+- Capture byte-identical rollback BEFORE any push (HF raw API). Space HEAD 21650140743cbe98be11b78ee37dff50bb70ba1c.
+

@@ -1,6 +1,6 @@
 {
  "v": 3,
- "enabled": true,
+ "enabled": false,
  "gateway": "http://127.0.0.1:9701",
  "tick_interval_s": 10,
  "poll_interval_s": 90,
