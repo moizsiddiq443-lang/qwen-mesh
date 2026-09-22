@@ -1,0 +1,11 @@
+{
+  "generated_at": "2026-09-22T00:01:40.879Z",
+  "note": "counts only - digests.jsonl/qa-scores.jsonl never uploaded wholesale to the state repo",
+  "counts": {
+    "queue.jsonl": 0,
+    "agent-queue.jsonl": 0,
+    "sandbox-queue.jsonl": 0,
+    "digests.jsonl": 0,
+    "qa-scores.jsonl": 0
+  }
+}
