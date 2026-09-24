@@ -29,7 +29,7 @@ NOTE: egress layer is LIVE but lanes are NOT yet dispatcher-wired into drain/san
 - NEVER touches accounts.json / jar vault / ops-theory / alpha_machine. No whatsapp MCP in opencode config → relay:'orchestrator'
 
 ## Reboot persistence
-- HKCU Run keys: 10 oxalpha-* entries (gateway, capture, drain, watchdog, honeypot, topic-forge, jwt-treadmill, auto-loop, sandbox-jobs, agent-jobs) — full stack survives reboot
+- HKCU Run keys: 10 alpha-* entries (gateway, capture, drain, watchdog, honeypot, topic-forge, jwt-treadmill, auto-loop, sandbox-jobs, agent-jobs) — full stack survives reboot
 - Proven 2026-09-13: ~00:50 OS reboot killed the whole stack (~3h cold). fleet-safe-restart.ps1 exited 2 (stale drain inflight>0 gate blocks forever once jobs are orphaned — cold-start manually); gateway + watchdog relaunched 03:35 local, watchdog self-healed all 6 daemons, drain resumed firing
 
 ## Current numbers
@@ -42,7 +42,7 @@ NOTE: egress layer is LIVE but lanes are NOT yet dispatcher-wired into drain/san
 ## Sandbox compute lane (2026-09-12 VM-probe milestone)
 - Verdict: NO 10GB/1GB agent VM on fleet accounts (full UI walk + 46-probe API map + 7-test pilot). Agent Mode = chat_type:'agent_mode' (Beta), gated by server rollout flag permissions.chat.agent_mode (0=Unavailable, 1=Available, 2=Hidden, 5=GuestUnavailable); fleet accs 2=Hidden, principal's own account enabled — rollout, not tier wall; payment UI disabled; '10GB' string absent from web bundle (desktop/Plus marketing). Every pod/workspace/sandbox REST endpoint ABSENT (L-055 re-confirmed 2026-09-12)
 - Real compute lane (all proven live): code_interpreter server-side Python via t2t SSE on completions — direct HTTP, zero WAF friction (chats/new 200 in 1.2s); internet ON (urllib HTTP 200); pandas/numpy preinstalled; NO pip (20s cap blocks installs); HARD 20s per code_interpreter call; per-chat ISOLATED file workspace (20MB/file, 50MB total, 10 files) via getstsToken → OSS V1 signed PUT → parse → messages[0].files[] attach; NOT persistent across chats
-- Lane 1 — sandbox-runner.mjs: runSandbox({accountIndex?,steps,files}) with ###RESULT###+JSON machine contract; state flows via chunk outputs (fresh t2t chat per chunk); buildChunks for perm_test/power_calc; LRU account rotation (shared sandbox-state.json, ≥5s spacing, ≤30 t2t chats/h/account, drain-inflight skip). sandbox-jobs.mjs daemon polls sandbox-queue.jsonl (types: perm_test/power_calc/custom_py) → sandbox-results/<id>.json + sandbox-jobs.jsonl; daemon RUNNING + HKCU Run key oxalpha-sandbox-jobs
+- Lane 1 — sandbox-runner.mjs: runSandbox({accountIndex?,steps,files}) with ###RESULT###+JSON machine contract; state flows via chunk outputs (fresh t2t chat per chunk); buildChunks for perm_test/power_calc; LRU account rotation (shared sandbox-state.json, ≥5s spacing, ≤30 t2t chats/h/account, drain-inflight skip). sandbox-jobs.mjs daemon polls sandbox-queue.jsonl (types: perm_test/power_calc/custom_py) → sandbox-results/<id>.json + sandbox-jobs.jsonl; daemon RUNNING + HKCU Run key alpha-sandbox-jobs
 - Lane 2 — qa-reread.mjs: attach a completed DR report (runs/*.report.md) → model grades vs epistemic rubric (falsifiability/source_quality/structure/calibration_language/verdict_clarity, 0-10) → strict JSON + anti-lazy quote-check (UNREAD gate) → ../qa-scores.jsonl
 - Verified: J1 6000-shuffle perm p=0.00617; J2 paired 4000-shuffle p=0.00525 CI95 [0.075,0.272]; J3 2-prop power 0.3813 ≈ analytic 0.375 (within 1.3 SE); 13/13 chunks first-attempt. QA on 3 real reports: 9.6 (VigiBase 35.3KB) / 8.6 (FluSight 22.7KB) / 8.8 (G1 protocol 20.6KB), distinct scores, verbatim quote-checks confirmed, sha256 recorded; strict-JSON 1-retry recovery mandatory (first-attempt clean parse was 1/3)
 - Scale: 28 ready accounts × code_interpreter = 28-worker distributed Python fleet; jobs must chunk ≤20s; inputs re-uploaded per job
@@ -59,7 +59,7 @@ NOTE: egress layer is LIVE but lanes are NOT yet dispatcher-wired into drain/san
 - [ ] sqlite3-stdlib test as pip-free DB option inside code_interpreter (stdlib may cover the per-job persistence gap without pip)
 - [ ] Gateway 1024MB heap applies on next restart (natural death or fleet-safe-restart.ps1 in quiet window; polls drain inflight==0 first)
 - [ ] 72h soak acceptance unchanged: ≥900/day, success ≥95%, 0 IP challenges, queue ≥1900, Hermes closes ≥90% incidents
-- [ ] ox-alpha state-graph update deferred behind G6 (validator failing, 14 errors) — do NOT attempt now
+- [ ] alpha state-graph update deferred behind G6 (validator failing, 14 errors) — do NOT attempt now
 
 ## Runbook
 - Logs: fleet/*.log (gateway, drain, capture, auto-loop, honeypot, topic-forge, jwt-treadmill, watchdog, hermes); state in *-state.json; job records fleet/jobs/<job_id>.json; notifications.jsonl; supervisor-ledger.jsonl; alarm.json on trigger
