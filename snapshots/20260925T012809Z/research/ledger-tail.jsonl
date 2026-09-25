@@ -1,0 +1,12 @@
+{"ts":"2026-09-24T23:20:17.960Z","event":"forge_batch","batch":1,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-24T23:20:39.640Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-24T23:21:15.569Z","event":"forge_batch","batch":2,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-24T23:22:48.839Z","event":"forge_run","batches":3,"queued":0,"stock_before":0,"stock_after":0}
+{"ts":"2026-09-24T23:35:40.539Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-24T23:50:41.427Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T00:05:42.320Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T00:20:43.171Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T00:35:44.087Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T00:50:44.981Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T01:05:45.884Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T01:20:46.742Z","event":"evolve","signals":0,"proposal":null,"applied":false}
