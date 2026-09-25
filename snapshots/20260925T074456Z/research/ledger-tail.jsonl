@@ -1,0 +1,97 @@
+{"ts":"2026-09-24T23:20:17.960Z","event":"forge_batch","batch":1,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-24T23:20:39.640Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-24T23:21:15.569Z","event":"forge_batch","batch":2,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-24T23:22:48.839Z","event":"forge_run","batches":3,"queued":0,"stock_before":0,"stock_after":0}
+{"ts":"2026-09-24T23:35:40.539Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-24T23:50:41.427Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T00:05:42.320Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T00:20:43.171Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T00:35:44.087Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T00:50:44.981Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T01:05:45.884Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T01:20:46.742Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T01:35:47.604Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T01:50:48.474Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T02:05:49.334Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T02:20:50.177Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T02:24:35.553Z","event":"forge_batch","batch":1,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T02:25:30.817Z","event":"forge_batch","batch":2,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-25T02:29:50.992Z","event":"forge_batch","batch":3,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-25T02:30:38.993Z","event":"forge_batch","batch":4,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T02:31:56.496Z","event":"forge_batch","batch":5,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-25T02:32:42.305Z","event":"forge_batch","batch":6,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T02:33:49.838Z","event":"forge_batch","batch":7,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T02:34:45.262Z","event":"forge_batch","batch":8,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T02:35:52.082Z","event":"rasi_loop_fail","queue_id":"f20260925022435-1","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T02:35:52.154Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T02:36:12.120Z","event":"forge_batch","batch":9,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T02:37:31.245Z","event":"forge_batch","batch":10,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T02:40:01.082Z","event":"forge_batch","batch":11,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T02:41:22.985Z","event":"forge_batch","batch":12,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-25T02:42:23.907Z","event":"forge_batch","batch":13,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-25T02:43:04.163Z","event":"forge_batch","batch":14,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T02:43:56.841Z","event":"forge_batch","batch":15,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T02:48:15.984Z","event":"forge_batch","batch":16,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-25T02:49:32.747Z","event":"forge_batch","batch":17,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-25T02:50:53.557Z","event":"rasi_loop_fail","queue_id":"f20260925022435-1","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T02:50:53.640Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T02:51:03.077Z","event":"forge_run","batches":18,"queued":100,"stock_before":0,"stock_after":100}
+{"ts":"2026-09-25T03:05:55.489Z","event":"rasi_loop_fail","queue_id":"f20260925022435-1","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T03:05:55.566Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T03:20:57.275Z","event":"rasi_loop_fail","queue_id":"f20260925022435-2","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T03:20:57.353Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T03:35:59.036Z","event":"rasi_loop_fail","queue_id":"f20260925022435-2","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T03:35:59.110Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T03:51:00.991Z","event":"rasi_loop_fail","queue_id":"f20260925022435-2","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T03:51:01.074Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T04:06:02.759Z","event":"rasi_loop_fail","queue_id":"f20260925022435-3","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T04:06:02.841Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T04:21:04.223Z","event":"rasi_loop_fail","queue_id":"f20260925022435-3","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T04:21:04.297Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T04:36:06.112Z","event":"rasi_loop_fail","queue_id":"f20260925022435-3","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T04:36:06.188Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T04:51:07.573Z","event":"rasi_loop_fail","queue_id":"f20260925022435-4","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T04:51:07.654Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T05:06:09.520Z","event":"rasi_loop_fail","queue_id":"f20260925022435-4","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T05:06:09.591Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T05:21:11.064Z","event":"rasi_loop_fail","queue_id":"f20260925022435-4","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T05:21:11.147Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T05:36:12.982Z","event":"rasi_loop_fail","queue_id":"f20260925022435-5","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T05:36:13.071Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T05:51:14.563Z","event":"rasi_loop_fail","queue_id":"f20260925022435-5","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T05:51:14.641Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T05:51:52.233Z","event":"forge_batch","batch":1,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T05:52:41.181Z","event":"forge_batch","batch":2,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T05:54:13.870Z","event":"forge_batch","batch":3,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-25T05:56:17.362Z","event":"forge_batch","batch":4,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T05:58:15.494Z","event":"forge_batch","batch":5,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T06:00:15.620Z","event":"forge_batch","batch":6,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T06:01:09.619Z","event":"forge_batch","batch":7,"generated":10,"dedup_dropped":1,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":9}
+{"ts":"2026-09-25T06:03:01.738Z","event":"forge_batch","batch":8,"generated":10,"dedup_dropped":1,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":9}
+{"ts":"2026-09-25T06:04:01.492Z","event":"forge_batch","batch":9,"generated":11,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":11}
+{"ts":"2026-09-25T06:04:56.696Z","event":"forge_batch","batch":10,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T06:06:16.637Z","event":"rasi_loop_fail","queue_id":"f20260925022435-5","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T06:06:16.719Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T06:07:25.822Z","event":"forge_batch","batch":11,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T06:08:29.161Z","event":"forge_batch","batch":12,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-25T06:10:45.744Z","event":"forge_batch","batch":13,"generated":10,"dedup_dropped":1,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":9}
+{"ts":"2026-09-25T06:12:19.702Z","event":"forge_batch","batch":14,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-25T06:13:20.011Z","event":"forge_batch","batch":15,"generated":11,"dedup_dropped":1,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T06:14:57.329Z","event":"forge_batch","batch":16,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-25T06:16:32.703Z","event":"forge_batch","batch":17,"generated":1,"dedup_dropped":0,"shape_failed":1,"gate_failed":0,"financial_capped":0,"queued":0}
+{"ts":"2026-09-25T06:17:48.876Z","event":"forge_batch","batch":18,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T06:20:12.384Z","event":"forge_batch","batch":19,"generated":10,"dedup_dropped":1,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":9}
+{"ts":"2026-09-25T06:21:18.130Z","event":"rasi_loop_fail","queue_id":"f20260925022435-6","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T06:21:18.202Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T06:22:22.968Z","event":"forge_batch","batch":20,"generated":10,"dedup_dropped":0,"shape_failed":0,"gate_failed":0,"financial_capped":0,"queued":10}
+{"ts":"2026-09-25T06:22:22.969Z","event":"forge_run","batches":20,"queued":147,"stock_before":96,"stock_after":242}
+{"ts":"2026-09-25T06:36:20.218Z","event":"rasi_loop_fail","queue_id":"f20260925022435-6","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T06:36:20.296Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T06:51:21.677Z","event":"rasi_loop_fail","queue_id":"f20260925022435-6","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T06:51:21.754Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T07:06:23.161Z","event":"rasi_loop_fail","queue_id":"f20260925022435-7","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T07:06:23.240Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T07:21:24.627Z","event":"rasi_loop_fail","queue_id":"f20260925022435-7","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T07:21:24.706Z","event":"evolve","signals":0,"proposal":null,"applied":false}
+{"ts":"2026-09-25T07:36:26.499Z","event":"rasi_loop_fail","queue_id":"f20260925022435-7","error":"fire failed: HTTP 200"}
+{"ts":"2026-09-25T07:36:26.578Z","event":"evolve","signals":0,"proposal":null,"applied":false}
