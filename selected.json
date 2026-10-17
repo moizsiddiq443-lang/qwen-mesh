@@ -1,10 +1,10 @@
 [
   {
-    "index": 4,
-    "topic": "SSE proxy patterns: streaming OpenAI-compatible completions through Node and Python reverse proxies without buffering"
+    "index": 6,
+    "topic": "Anti-bot evasion research trends: TLS/JA3 fingerprinting, WAF risk scoring, and browser session trust signals"
   },
   {
-    "index": 5,
-    "topic": "Account lifecycle management for shared API pools: token TTL rotation, warm pools, and per-account health scoring"
+    "index": 7,
+    "topic": "Open-source LLM gateway patterns: failover routers, key rotation, and rate-limit-aware scheduling, a comparative review"
   }
 ]
